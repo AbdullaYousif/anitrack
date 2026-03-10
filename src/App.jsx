@@ -4,28 +4,29 @@ import AnimeCard from "./components/AnimeCard";
 
 function App() {
   const [searchResult, setSearchResult] = useState([]);
+  const [activeTab, setActiveTab] = useState("watchlist");
   const [searchQuery, setSearchQuery] = useState("Naruto");
   const [watchlist, setWatchlist] = useState(() => {
     const saved = localStorage.getItem("watchlist");
     return saved ? JSON.parse(saved) : {};
-  })
+  });
 
-
-  function toggleWatchlist(anime){
-    if (watchlist[anime.mal_id]){
-      setWatchlist(current => {
-        const {[anime.mal_id]:_, ...rest} = current;
+  function toggleWatchlist(anime) {
+    if (watchlist[anime.mal_id]) {
+      setWatchlist((current) => {
+        const { [anime.mal_id]: _, ...rest } = current;
         return rest;
       });
-
-    }else {
-      setWatchlist({...watchlist, [anime.mal_id]: {anime, status: "Plan to Watch"}});
+    } else {
+      setWatchlist({
+        ...watchlist,
+        [anime.mal_id]: { anime, status: "Plan to Watch" },
+      });
     }
-   
   }
 
   useEffect(() => {
-     localStorage.setItem("watchlist", JSON.stringify(watchlist));
+    localStorage.setItem("watchlist", JSON.stringify(watchlist));
   }, [watchlist]);
 
   useEffect(() => {
@@ -45,21 +46,70 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <h1 className="text-3xl font-bold text-sky-400 mb-2">AniTrack</h1>
+      <div id="nav-bar" className="flex gap-6 mb-8">
+        <button
+          className={`px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${
+            activeTab === "watchlist"
+              ? "border-sky-400 text-white"
+              : "border-transparent text-gray-400 hover:text-white"
+          }`}
+          onClick={() => setActiveTab("watchlist")}
+        >
+          My Watchlist
+        </button>
+        <button
+          className={`px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${
+            activeTab === "search"
+              ? "border-sky-400 text-white"
+              : "border-transparent text-gray-400 hover:text-white"
+          }`}
+          onClick={() => setActiveTab("search")}
+        >
+          Search
+        </button>
+      </div>
       <p className="text-gray-400 mb-8">
         Never lose track of your favourite shows
       </p>
+      {activeTab === "search" && (
+        <>
+          <input
+            id="search-box"
+            className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg outline-none"
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-4">
+            {searchResult.map((anime) => {
+              return (
+                <AnimeCard
+                  key={anime.mal_id}
+                  anime={anime}
+                  inWatchlist={!!watchlist[anime.mal_id]}
+                  onToggle={() => toggleWatchlist(anime)}
+                ></AnimeCard>
+              );
+            })}
+          </div>
+        </>
+      )}
 
-      <input
-        className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg outline-none"
-        type="text"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-      />
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-4">
-        {searchResult.map((anime) => {
-          return <AnimeCard key={anime.mal_id} anime={anime} inWatchlist={!!watchlist[anime.mal_id]}  onToggle={() => toggleWatchlist(anime)}></AnimeCard>;
-        })}
-      </div>
+      {activeTab === "watchlist" && (
+        <>
+          <h1> My Watchlist </h1>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-4">
+            {Object.values(watchlist).map((item) => {
+              return (
+                <AnimeCard
+                  key={item.anime.mal_id}
+                  anime={item.anime}
+                ></AnimeCard>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }
