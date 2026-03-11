@@ -1,11 +1,12 @@
 import "./index.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import AnimeCard from "./components/AnimeCard";
 
 function App() {
   const [searchResult, setSearchResult] = useState([]);
-  const [activeTab, setActiveTab] = useState("watchlist");
+  const [activeTab, setActiveTab] = useState("search");
   const [searchQuery, setSearchQuery] = useState("Naruto");
+  const cacheRef = useRef({});
   const [watchlist, setWatchlist] = useState(() => {
     const saved = localStorage.getItem("watchlist");
     return saved ? JSON.parse(saved) : {};
@@ -25,6 +26,12 @@ function App() {
     }
   }
 
+  function changeStatus(mal_id, newStatus) {
+    setWatchlist({
+      ...watchlist,
+    [mal_id]: {...watchlist[mal_id], status: newStatus}
+    });
+  }
   useEffect(() => {
     localStorage.setItem("watchlist", JSON.stringify(watchlist));
   }, [watchlist]);
@@ -32,11 +39,18 @@ function App() {
   useEffect(() => {
     const timer = setTimeout(() => {
       const fetchAnime = async () => {
+        if(cacheRef.current[searchQuery]){
+          setSearchResult(cacheRef.current[searchQuery]);
+          return
+        }
         const res = await fetch(
           `https://api.jikan.moe/v4/anime?q=${searchQuery}&limit=20`,
         );
         const data = await res.json();
+        cacheRef.current[searchQuery] = data.data;
         setSearchResult(data.data);
+
+        
       };
       fetchAnime();
     }, 500);
@@ -88,6 +102,7 @@ function App() {
                   anime={anime}
                   inWatchlist={!!watchlist[anime.mal_id]}
                   onToggle={() => toggleWatchlist(anime)}
+                  onChangeStatus={(newStatus => changeStatus(anime.mal_id,newStatus))}
                 ></AnimeCard>
               );
             })}
@@ -97,13 +112,17 @@ function App() {
 
       {activeTab === "watchlist" && (
         <>
-          <h1> My Watchlist </h1>
+          <h1 className="text-2xl font-bold text-sky-400 mb-2"> My Watchlist </h1>
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-4">
             {Object.values(watchlist).map((item) => {
               return (
                 <AnimeCard
                   key={item.anime.mal_id}
+                  inWatchlist={true}
+                  onToggle={()=> toggleWatchlist(item.anime)}
+                  status={item.status}
                   anime={item.anime}
+                  onChangeStatus={(newStatus => changeStatus(item.anime.mal_id,newStatus))}
                 ></AnimeCard>
               );
             })}
