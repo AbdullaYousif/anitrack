@@ -1,12 +1,20 @@
 import "./index.css";
 import { useState, useEffect, useRef } from "react";
 import AnimeCard from "./components/AnimeCard";
+import Modal from "./components/Modal";
 
 function App() {
   const [searchResult, setSearchResult] = useState([]);
   const [activeTab, setActiveTab] = useState("search");
   const [searchQuery, setSearchQuery] = useState("Naruto");
   const cacheRef = useRef({});
+  const [modalStatus, setModalStatus] = useState(false);
+  const [modalType, setModalType] = useState("login");
+  const [userToken, setUserToken]= useState(() => {
+    const saved = localStorage.getItem("userToken");
+    return saved ? saved : null;
+  });
+
   const [watchlist, setWatchlist] = useState(() => {
     const saved = localStorage.getItem("watchlist");
     return saved ? JSON.parse(saved) : {};
@@ -25,7 +33,12 @@ function App() {
       });
     }
   }
+  function handleAuthSuccess(userToken) {
+    setUserToken(userToken);
+    localStorage.setItem("userToken",userToken);
+    setModalStatus(false);
 
+  }
   function changeStatus(mal_id, newStatus) {
     setWatchlist({
       ...watchlist,
@@ -81,6 +94,23 @@ function App() {
         >
           Search
         </button>
+        <button
+          className={`px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${
+            activeTab === "register"
+              ? "border-sky-400 text-white"
+              : "border-transparent text-gray-400 hover:text-white"
+          }`}
+           onClick={() => { setModalStatus(true), setModalType("register"); }}   
+          
+        >
+          Sign Up
+        </button>
+        <button
+
+           onClick={() => { setModalStatus(true), setModalType("login"); }}   
+        >
+          Login
+        </button>
       </div>
       <p className="text-gray-400 mb-8">
         Never lose track of your favourite shows
@@ -129,6 +159,7 @@ function App() {
           </div>
         </>
       )}
+      {modalStatus && <Modal type={modalType} onClose={()=> setModalStatus(false)} onAuthSuccess={handleAuthSuccess}></Modal>}
     </div>
   );
 }
