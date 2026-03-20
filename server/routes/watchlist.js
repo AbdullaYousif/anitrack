@@ -19,7 +19,7 @@ watchlistRouter.patch('/:mal_id', authMiddleware, async (req, res)=> {
     res.send(response.rows[0]);
 })
 watchlistRouter.delete('/:mal_id', authMiddleware, async (req, res)=> {
-    const response = await pool.query('DELETE FROM watchlist WHERE mal_id = $1 RETURNING *', [req.params.mal_id]);
+    await pool.query('DELETE FROM watchlist WHERE mal_id = $1 RETURNING *', [req.params.mal_id]);
     res.send({message: 'Deleted'});
 })
 

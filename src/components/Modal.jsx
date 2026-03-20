@@ -22,7 +22,8 @@ function Modal({ onClose, type, onSubmit, onAuthSuccess }) {
           body: JSON.stringify({ username, password }),
         });
         const loginData = await loginResponse.json();
-        onAuthSuccess(loginData.token);
+        const userID = loginData.user_id;
+        onAuthSuccess(loginData.token,username,userID);
       }
       else {
         return alert("Login Failed");
@@ -39,7 +40,8 @@ function Modal({ onClose, type, onSubmit, onAuthSuccess }) {
       });
       if(response.ok) {
         const loginData = await response.json();
-        onAuthSuccess(loginData.token);
+        const userID = loginData.user_id;
+        onAuthSuccess(loginData.token,username,userID);
       }
       else{
         return alert("Login Failed");

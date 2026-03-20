@@ -33,7 +33,7 @@ authRouter.post('/register', async (req, res)=> {
         const hashResult = await bcrypt.compare(password,getUser.rows[0].password);
         if(hashResult){
             const token = jwt.sign({id: getUser.rows[0].user_id, username: username}, process.env.JWT_SECRET_KEY, {expiresIn: '1h'});
-            return res.status(200).json({token});
+            return res.status(200).json({token,user_id: getUser.rows[0].user_id});
 
         }
         } catch (error){
