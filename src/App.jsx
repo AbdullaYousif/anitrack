@@ -7,7 +7,8 @@ function App() {
   const [searchResult, setSearchResult] = useState([]);
   const [activeTab, setActiveTab] = useState("search");
   const [searchQuery, setSearchQuery] = useState("One Piece");
-  const [seasonal, setSeasonal] = useState(null);
+  const [seasonal, setSeasonal] = useState([]);
+  const [topAnime, setTopAnime] = useState([]);
   const cacheRef = useRef({});
   const [modalStatus, setModalStatus] = useState(false);
   const [modalType, setModalType] = useState("login");
@@ -124,14 +125,28 @@ function App() {
     return () => clearTimeout(timer); //if query changes before 500m, cancel the timer
   }, [searchQuery]);
 
- useEffect( ()=> {
-  async function getSeasonalAnime() {
+
+async function getSeasonalAnime() {
+    if (cacheRef.current["seasonal"]) {
+    setSeasonal(cacheRef.current["seasonal"]);
+    return
+  }
   const res = await fetch(`https://api.jikan.moe/v4/seasons/now`)
   const data = await res.json();
+  cacheRef.current["seasonal"] = data.data;
   setSeasonal(data.data);
 }
-  getSeasonalAnime();
- }, [])
+
+  async function getTopAnime() {
+     if (cacheRef.current["top"]) {
+    setTopAnime(cacheRef.current["top"]);
+    return
+  }
+  const res = await fetch(`https://api.jikan.moe/v4/top/anime?limit=25`)
+  const data = await res.json();
+  cacheRef.current["top"] = data.data;
+  setTopAnime(data.data);
+}
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <h1 className="text-3xl font-bold text-sky-400 mb-2">AniTrack</h1>
@@ -147,9 +162,9 @@ function App() {
           My Watchlist
         </button>)}
         <button
-          className={`px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${
+          className={`cursor-pointer px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${
             activeTab === "search"
-              ? "border-sky-400 text-white cursor-pointer"
+              ? "border-sky-400 text-white"
               : "border-transparent text-gray-400 hover:text-white"
           }`}
           onClick={() => setActiveTab("search")}
@@ -158,14 +173,25 @@ function App() {
         </button>
 
         <button
-          className={`px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${
+          className={` cursor-pointer px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${
             activeTab === "seasonal"
+              ? "border-sky-400 text-white"
+              : "border-transparent text-gray-400 hover:text-white"
+          }`}
+            onClick={() => { setActiveTab("seasonal"); getSeasonalAnime(); }}
+        >
+          Seasonal Anime
+        </button>
+
+          <button
+          className={` cursor-pointer px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${
+            activeTab === "top"
               ? "border-sky-400 text-white cursor-pointer"
               : "border-transparent text-gray-400 hover:text-white"
           }`}
-          onClick={() => setActiveTab("seasonal")}
+          onClick={() => { setActiveTab("top"); getTopAnime(); }}
         >
-          Seasonal Anime
+          Top Anime
         </button>
         <div className="ml-auto flex gap-4 items-center">
           {!userToken && (
@@ -254,6 +280,25 @@ function App() {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-4">
             {seasonal.map((anime) => {
+              return (
+                <AnimeCard
+                  key={anime.mal_id}
+                  anime={anime}
+                  inWatchlist={!!watchlist[anime.mal_id]}
+                  onToggle={() => toggleWatchlist(anime)}
+                  onChangeStatus={(newStatus) =>
+                    changeStatus(anime.mal_id, newStatus)
+                  }
+                ></AnimeCard>
+              );
+            })}
+          </div>
+        </>
+      )}
+      {activeTab === "top" && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-4">
+            {topAnime.map((anime) => {
               return (
                 <AnimeCard
                   key={anime.mal_id}
