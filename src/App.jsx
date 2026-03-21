@@ -6,7 +6,8 @@ import Modal from "./components/Modal";
 function App() {
   const [searchResult, setSearchResult] = useState([]);
   const [activeTab, setActiveTab] = useState("search");
-  const [searchQuery, setSearchQuery] = useState("Naruto");
+  const [searchQuery, setSearchQuery] = useState("One Piece");
+  const [seasonal, setSeasonal] = useState(null);
   const cacheRef = useRef({});
   const [modalStatus, setModalStatus] = useState(false);
   const [modalType, setModalType] = useState("login");
@@ -34,7 +35,7 @@ function App() {
         const { [anime.mal_id]: _, ...rest } = current;
         return rest;
       });
-      const response = await fetch(`http://localhost:3000/watchlist/${anime.mal_id}`, {
+      await fetch(`http://localhost:3000/watchlist/${anime.mal_id}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${userToken}`,
@@ -47,7 +48,7 @@ function App() {
         ...watchlist,
         [anime.mal_id]: { anime, status: "Plan to Watch" },
       });
-      const response = await fetch(`http://localhost:3000/watchlist/`, {
+      await fetch(`http://localhost:3000/watchlist/`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${userToken}`,
@@ -123,6 +124,14 @@ function App() {
     return () => clearTimeout(timer); //if query changes before 500m, cancel the timer
   }, [searchQuery]);
 
+ useEffect( ()=> {
+  async function getSeasonalAnime() {
+  const res = await fetch(`https://api.jikan.moe/v4/seasons/now`)
+  const data = await res.json();
+  setSeasonal(data.data);
+}
+  getSeasonalAnime();
+ }, [])
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <h1 className="text-3xl font-bold text-sky-400 mb-2">AniTrack</h1>
@@ -140,17 +149,28 @@ function App() {
         <button
           className={`px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${
             activeTab === "search"
-              ? "border-sky-400 text-white"
+              ? "border-sky-400 text-white cursor-pointer"
               : "border-transparent text-gray-400 hover:text-white"
           }`}
           onClick={() => setActiveTab("search")}
         >
           Search
         </button>
+
+        <button
+          className={`px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${
+            activeTab === "seasonal"
+              ? "border-sky-400 text-white cursor-pointer"
+              : "border-transparent text-gray-400 hover:text-white"
+          }`}
+          onClick={() => setActiveTab("seasonal")}
+        >
+          Seasonal Anime
+        </button>
         <div className="ml-auto flex gap-4 items-center">
           {!userToken && (
             <button
-              className="px-4 py-2 text-sm font-semibold text-gray-400 hover:text-white"
+              className="cursor-pointer px-4 py-2 text-sm font-semibold text-gray-400 hover:text-white"
               onClick={() => { setModalStatus(true); setModalType("register"); }}
             >
               Sign Up
@@ -158,7 +178,7 @@ function App() {
           )}
           {!userToken && (
             <button
-              className="px-4 py-2 text-sm font-semibold bg-sky-500 hover:bg-sky-400 rounded-lg"
+              className="cursor-pointer px-4 py-2 text-sm font-semibold bg-sky-500 hover:bg-sky-400 rounded-lg"
               onClick={() => { setModalStatus(true); setModalType("login"); }}
             >
               Login
@@ -166,7 +186,7 @@ function App() {
           )}
           {userToken && (
             <>
-              <span className="text-gray-400 text-sm"> <span className="text-white font-semibold">{username}</span></span>
+              <span className="cursor-pointer text-gray-400 text-sm"> <span className="text-white font-semibold">{username}</span></span>
               <button
                 className="px-4 py-2 text-sm font-semibold text-gray-400 hover:text-white"
                 onClick={() => { setUserToken(null); setUsername(null); localStorage.removeItem("userToken"); }}
@@ -223,6 +243,25 @@ function App() {
                   anime={item.anime}
                   onChangeStatus={(newStatus) =>
                     changeStatus(item.anime.mal_id, newStatus)
+                  }
+                ></AnimeCard>
+              );
+            })}
+          </div>
+        </>
+      )}
+      {activeTab === "seasonal" && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-4">
+            {seasonal.map((anime) => {
+              return (
+                <AnimeCard
+                  key={anime.mal_id}
+                  anime={anime}
+                  inWatchlist={!!watchlist[anime.mal_id]}
+                  onToggle={() => toggleWatchlist(anime)}
+                  onChangeStatus={(newStatus) =>
+                    changeStatus(anime.mal_id, newStatus)
                   }
                 ></AnimeCard>
               );
