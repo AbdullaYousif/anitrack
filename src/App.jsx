@@ -1,6 +1,8 @@
 import "./index.css";
 import { useState, useEffect, useRef } from "react";
+import { getSeasonalAnime, getTopAnime, searchAnime } from "./api/anilist";
 import AnimeCard from "./components/AnimeCard";
+import AnimeDetail from "./components/AnimeDetail";
 import Modal from "./components/Modal";
 
 function App() {
@@ -12,6 +14,7 @@ function App() {
   const cacheRef = useRef({});
   const [modalStatus, setModalStatus] = useState(false);
   const [modalType, setModalType] = useState("login");
+  const [selectedAnime, setSelectedAnime] = useState(null);
   const [userID, setUserID] = useState( () => {
     const saved = localStorage.getItem("userID");
     return saved ? saved : null;
@@ -31,12 +34,12 @@ function App() {
   });
 
   async function toggleWatchlist(anime) {
-    if (watchlist[anime.mal_id]) {
+    if (watchlist[anime.id]) {
       setWatchlist((current) => {
-        const { [anime.mal_id]: _, ...rest } = current;
+        const { [anime.id]: _, ...rest } = current;
         return rest;
       });
-      await fetch(`http://localhost:3000/watchlist/${anime.mal_id}`, {
+      await fetch(`http://localhost:3000/watchlist/${anime.id}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${userToken}`,
@@ -47,7 +50,7 @@ function App() {
     } else {
       setWatchlist({
         ...watchlist,
-        [anime.mal_id]: { anime, status: "Plan to Watch" },
+        [anime.id]: { anime, status: "Plan to Watch" },
       });
       await fetch(`http://localhost:3000/watchlist/`, {
         method: "POST",
@@ -55,7 +58,7 @@ function App() {
           "Authorization": `Bearer ${userToken}`,
           "Content-Type": "application/json",
         }, 
-        body: JSON.stringify({user_id: userID, mal_id: anime.mal_id, anime_data: anime, status: "Plan to Watch" })
+        body: JSON.stringify({user_id: userID, anime_id: anime.id, anime_data: anime, status: "Plan to Watch" })
       })
     }
   }
@@ -68,12 +71,12 @@ function App() {
     setUserID(user_id);
     localStorage.setItem("userID",user_id);
   }
- async function changeStatus(mal_id, newStatus) {
+ async function changeStatus(anime_id, newStatus) {
     setWatchlist({
       ...watchlist,
-      [mal_id]: { ...watchlist[mal_id], status: newStatus },
+      [anime_id]: { ...watchlist[anime_id], status: newStatus },
     });
-    await fetch(`http://localhost:3000/watchlist/${mal_id}`, {
+    await fetch(`http://localhost:3000/watchlist/${anime_id}`, {
       method: "PATCH",
       headers: {
           "Authorization": `Bearer ${userToken}`,
@@ -98,7 +101,7 @@ function App() {
         const data = await res.json();
         const result = {};
         data.forEach(row => {
-          result[row.mal_id] = {anime: row.anime_data, status: row.status};
+          result[row.anime_id] = {anime: row.anime_data, status: row.status};
         })
         setWatchlist(result);
       }
@@ -113,12 +116,9 @@ function App() {
           setSearchResult(cacheRef.current[searchQuery]);
           return;
         }
-        const res = await fetch(
-          `https://api.jikan.moe/v4/anime?q=${searchQuery}&limit=20`,
-        );
-        const data = await res.json();
-        cacheRef.current[searchQuery] = data.data;
-        setSearchResult(data.data);
+        const data = await searchAnime(searchQuery);
+        cacheRef.current[searchQuery] = data;
+        setSearchResult(data);
       };
       fetchAnime();
     }, 500);
@@ -126,26 +126,24 @@ function App() {
   }, [searchQuery]);
 
 
-async function getSeasonalAnime() {
+async function loadSeasonalAnime() {
     if (cacheRef.current["seasonal"]) {
     setSeasonal(cacheRef.current["seasonal"]);
     return
   }
-  const res = await fetch(`https://api.jikan.moe/v4/seasons/now`)
-  const data = await res.json();
-  cacheRef.current["seasonal"] = data.data;
-  setSeasonal(data.data);
+  const data = await getSeasonalAnime();
+  cacheRef.current["seasonal"] = data;
+  setSeasonal(data);
 }
 
-  async function getTopAnime() {
+  async function loadTopAnime() {
      if (cacheRef.current["top"]) {
     setTopAnime(cacheRef.current["top"]);
     return
   }
-  const res = await fetch(`https://api.jikan.moe/v4/top/anime?limit=25`)
-  const data = await res.json();
-  cacheRef.current["top"] = data.data;
-  setTopAnime(data.data);
+  const data = await getTopAnime();
+  cacheRef.current["top"] = data;
+  setTopAnime(data);
 }
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
@@ -178,7 +176,7 @@ async function getSeasonalAnime() {
               ? "border-sky-400 text-white"
               : "border-transparent text-gray-400 hover:text-white"
           }`}
-            onClick={() => { setActiveTab("seasonal"); getSeasonalAnime(); }}
+            onClick={() => { setActiveTab("seasonal"); loadSeasonalAnime(); }}
         >
           Seasonal Anime
         </button>
@@ -189,7 +187,7 @@ async function getSeasonalAnime() {
               ? "border-sky-400 text-white cursor-pointer"
               : "border-transparent text-gray-400 hover:text-white"
           }`}
-          onClick={() => { setActiveTab("top"); getTopAnime(); }}
+          onClick={() => { setActiveTab("top"); loadTopAnime(); }}
         >
           Top Anime
         </button>
@@ -239,13 +237,14 @@ async function getSeasonalAnime() {
             {searchResult.map((anime) => {
               return (
                 <AnimeCard
-                  key={anime.mal_id}
+                  key={anime.id}
                   anime={anime}
-                  inWatchlist={!!watchlist[anime.mal_id]}
+                  inWatchlist={!!watchlist[anime.id]}
                   onToggle={() => toggleWatchlist(anime)}
                   onChangeStatus={(newStatus) =>
-                    changeStatus(anime.mal_id, newStatus)
+                    changeStatus(anime.id, newStatus)
                   }
+                  onClick={() => setSelectedAnime(anime.id)}
                 ></AnimeCard>
               );
             })}
@@ -262,14 +261,15 @@ async function getSeasonalAnime() {
             {Object.values(watchlist).map((item) => {
               return (
                 <AnimeCard
-                  key={item.anime.mal_id}
+                  key={item.anime.id}
                   inWatchlist={true}
                   onToggle={() => toggleWatchlist(item.anime)}
                   status={item.status}
                   anime={item.anime}
                   onChangeStatus={(newStatus) =>
-                    changeStatus(item.anime.mal_id, newStatus)
+                    changeStatus(item.anime.id, newStatus)
                   }
+                  onClick={() => setSelectedAnime(item.anime.id)}
                 ></AnimeCard>
               );
             })}
@@ -282,13 +282,14 @@ async function getSeasonalAnime() {
             {seasonal.map((anime) => {
               return (
                 <AnimeCard
-                  key={anime.mal_id}
+                  key={anime.id}
                   anime={anime}
-                  inWatchlist={!!watchlist[anime.mal_id]}
+                  inWatchlist={!!watchlist[anime.id]}
                   onToggle={() => toggleWatchlist(anime)}
                   onChangeStatus={(newStatus) =>
-                    changeStatus(anime.mal_id, newStatus)
+                    changeStatus(anime.id, newStatus)
                   }
+                  onClick={() => setSelectedAnime(anime.id)}
                 ></AnimeCard>
               );
             })}
@@ -301,13 +302,14 @@ async function getSeasonalAnime() {
             {topAnime.map((anime) => {
               return (
                 <AnimeCard
-                  key={anime.mal_id}
+                  key={anime.id}
                   anime={anime}
-                  inWatchlist={!!watchlist[anime.mal_id]}
+                  inWatchlist={!!watchlist[anime.id]}
                   onToggle={() => toggleWatchlist(anime)}
                   onChangeStatus={(newStatus) =>
-                    changeStatus(anime.mal_id, newStatus)
+                    changeStatus(anime.id, newStatus)
                   }
+                  onClick={() => setSelectedAnime(anime.id)}
                 ></AnimeCard>
               );
             })}
@@ -320,6 +322,12 @@ async function getSeasonalAnime() {
           onClose={() => setModalStatus(false)}
           onAuthSuccess={handleAuthSuccess}
         ></Modal>
+      )}
+      {selectedAnime && (
+        <AnimeDetail
+          id={selectedAnime}
+          onClose={() => setSelectedAnime(null)}
+        ></AnimeDetail>
       )}
     </div>
   );
