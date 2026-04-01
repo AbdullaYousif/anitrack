@@ -98,7 +98,7 @@ function Modal({ onClose, type, onSubmit, onAuthSuccess }) {
           )}
           <button
             onClick={onSubmit}
-            className="bg-sky-500 hover:bg-sky-400 text-white font-semibold py-2 rounded w-full mt-2"
+            className="bg-green-400 hover:bg-green-400 text-white font-semibold py-2 rounded w-full mt-2"
             type="submit"
             id="submitButton"
           >
@@ -107,7 +107,7 @@ function Modal({ onClose, type, onSubmit, onAuthSuccess }) {
         </form>
         <button
           onClick={onClose}
-          className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 absolute top-0 right-2"
+          className="mt-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-red-600 absolute top-0 right-2"
         >
           X
         </button>

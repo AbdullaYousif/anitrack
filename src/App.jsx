@@ -147,12 +147,12 @@ async function loadSeasonalAnime() {
 }
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
-      <h1 className="text-3xl font-bold text-sky-400 mb-2">AniTrack</h1>
+      <h1 className="text-3xl font-bold text-green-500 mb-2">AniTrack</h1>
       <div id="nav-bar" className="flex gap-6 mb-8">
         {userToken && (<button
           className={`px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${
             activeTab === "watchlist"
-              ? "border-sky-400 text-white"
+              ? "border-green-500 text-white"
               : "border-transparent text-gray-400 hover:text-white"
           }`}
           onClick={() => setActiveTab("watchlist")}
@@ -162,7 +162,7 @@ async function loadSeasonalAnime() {
         <button
           className={`cursor-pointer px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${
             activeTab === "search"
-              ? "border-sky-400 text-white"
+              ? "border-green-500 text-white"
               : "border-transparent text-gray-400 hover:text-white"
           }`}
           onClick={() => setActiveTab("search")}
@@ -173,7 +173,7 @@ async function loadSeasonalAnime() {
         <button
           className={` cursor-pointer px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${
             activeTab === "seasonal"
-              ? "border-sky-400 text-white"
+              ? "border-green-500 text-white"
               : "border-transparent text-gray-400 hover:text-white"
           }`}
             onClick={() => { setActiveTab("seasonal"); loadSeasonalAnime(); }}
@@ -184,7 +184,7 @@ async function loadSeasonalAnime() {
           <button
           className={` cursor-pointer px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${
             activeTab === "top"
-              ? "border-sky-400 text-white cursor-pointer"
+              ? "border-green-500 text-white cursor-pointer"
               : "border-transparent text-gray-400 hover:text-white"
           }`}
           onClick={() => { setActiveTab("top"); loadTopAnime(); }}
@@ -202,7 +202,7 @@ async function loadSeasonalAnime() {
           )}
           {!userToken && (
             <button
-              className="cursor-pointer px-4 py-2 text-sm font-semibold bg-sky-500 hover:bg-sky-400 rounded-lg"
+              className="cursor-pointer px-4 py-2 text-sm font-semibold bg-green-500 hover:bg-green-500 rounded-lg"
               onClick={() => { setModalStatus(true); setModalType("login"); }}
             >
               Login
@@ -253,7 +253,7 @@ async function loadSeasonalAnime() {
       )}
       {activeTab === "watchlist" && (
         <>
-          <h1 className="text-2xl font-bold text-sky-400 mb-2">
+          <h1 className="text-2xl font-bold text-green-500 mb-2">
             {" "}
             My Watchlist{" "}
           </h1>
