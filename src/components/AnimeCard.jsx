@@ -1,8 +1,9 @@
 import React from "react";
 
-function AnimeCard({ anime, inWatchlist, onToggle, status, onChangeStatus }) {
+function AnimeCard({ anime, inWatchlist, onToggle, status, onChangeStatus, onClick }) {
   return (
-    <div className="bg-gray-900 text-white flex flex-col rounded-xl overflow-hidden ">
+    <div onClick={onClick} className="bg-gray-900 text-white flex flex-col rounded-xl overflow-hidden hover: cursor-pointer"> 
+      
       <img
         className="w-full aspect-2/3 object-cover"
         src={anime.images.jpg.large_image_url}
@@ -21,7 +22,6 @@ function AnimeCard({ anime, inWatchlist, onToggle, status, onChangeStatus }) {
             <option value="Completed">Completed</option>
           </select>
         }
-          
       </div>
     </div>
   );
