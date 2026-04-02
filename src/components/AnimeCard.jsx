@@ -1,8 +1,6 @@
-import React from "react";
-
 function AnimeCard({ anime, inWatchlist, onToggle, status, onChangeStatus, onClick }) {
   return (
-    <div onClick={onClick} className="bg-gray-900 text-white flex flex-col rounded-xl overflow-hidden hover: cursor-pointer"> 
+    <div onClick={onClick} className="animate-card-in bg-gray-900 text-white flex flex-col rounded-xl overflow-hidden hover:cursor-pointer">
       
       <img
         className="w-full aspect-2/3 object-cover"
