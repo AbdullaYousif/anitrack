@@ -22,9 +22,14 @@ async function anilistQuery(query, variables){
 
 
 
-export async function searchAnime(search) {
-let query = `query ($search: String, $perPage: Int) {
-    Page(perPage: $perPage) {
+export async function searchAnime(search,page) {
+let query = `query ($search: String, $page: Int, $perPage: Int) {
+    Page(page: $page, perPage: $perPage) {
+    pageInfo {
+    total
+    lastPage
+    hasNextPage
+    }
       media(search: $search, type: ANIME) {
         id
         title { romaji english }
@@ -33,12 +38,12 @@ let query = `query ($search: String, $perPage: Int) {
       }
     }
   }`
- const queryData = await anilistQuery(query, {search, perPage: 20})
- return queryData.Page.media.map(normalizeAnimeData)
+ const queryData = await anilistQuery(query, {search, page, perPage: 20})
+ return {media: queryData.Page.media.map(normalizeAnimeData), pageInfo: queryData.Page.pageInfo}
 
 }
 
-export async function getSeasonalAnime() {
+export async function getSeasonalAnime(page) {
     const currentDate = new Date();
     const monthIndex = currentDate.getMonth();
     const currentYear = new Date()
@@ -57,34 +62,45 @@ export async function getSeasonalAnime() {
     else {
         season = 'FALL';
     }
-    let query = `query ($season: MediaSeason, $seasonYear: Int, $perPage: Int){
-    Page(perPage: $perPage) {
+    let query = `query ($season: MediaSeason, $seasonYear: Int, $page: Int $perPage: Int){
+    Page(page: $page, perPage: $perPage) {
     media(season: $season, seasonYear: $seasonYear, type: ANIME){
     id
     title {romaji english}
     coverImage {large}
     averageScore
     }
+    pageInfo {
+    total
+    lastPage
+    hasNextPage
+    }
     }
     }`
-    const queryData = await anilistQuery(query, {season,seasonYear, perPage: 25});
-    return queryData.Page.media.map(normalizeAnimeData);
+    const queryData = await anilistQuery(query, {season,seasonYear,page, perPage: 20});
+ return {media: queryData.Page.media.map(normalizeAnimeData), pageInfo: queryData.Page.pageInfo}
 
 }
 
-export async function getTopAnime() {
-    let query = `query ($perPage: Int) {
-    Page(perPage: $perPage) {
+export async function getTopAnime(page) {
+    let query = `query ($perPage: Int, $page: Int) {
+    Page(page: $page, perPage: $perPage) {
       media(sort: SCORE_DESC, type: ANIME) {
         id
         title { romaji english }
         coverImage { large }
         averageScore
       }
+    pageInfo {
+    total
+    lastPage
+    hasNextPage
     }
+    }
+    
   }`
-  const queryData = await anilistQuery(query, {perPage: 25});
-  return queryData.Page.media.map(normalizeAnimeData);
+  const queryData = await anilistQuery(query, {page, perPage: 20});
+ return {media: queryData.Page.media.map(normalizeAnimeData), pageInfo: queryData.Page.pageInfo}
 }
 function normalizeAnimeData(media) {
     return {
