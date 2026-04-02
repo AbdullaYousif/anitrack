@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <defs>
+
+    <!-- Dark background matching app -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c0e14"/>
+      <stop offset="100%" stop-color="#111420"/>
+    </linearGradient>
+
+    <!-- Green accent gradient -->
+    <linearGradient id="cyanSlash" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#22c55e"/>
+    </linearGradient>
+
+    <!-- "A" body fill — white -->
+    <linearGradient id="aFill" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#d0d8e8"/>
+    </linearGradient>
+
+    <!-- Glow for slash -->
+    <filter id="slashGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Outer edge glow for the A shape -->
+    <filter id="edgeGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Subtle drop shadow for depth -->
+    <filter id="depthShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="20" flood-color="#4ade80" flood-opacity="0.12"/>
+    </filter>
+
+    <!-- Clip for background square -->
+    <clipPath id="bgClip">
+      <rect x="0" y="0" width="500" height="500" rx="80"/>
+    </clipPath>
+
+    <!-- Clip to mask the slash inside the A shape only -->
+    <clipPath id="aClip">
+      <!-- The full A polygon -->
+      <polygon points="250,52 430,420 370,420 320,300 180,300 130,420 70,420 250,52"/>
+    </clipPath>
+
+  </defs>
+
+  <!-- ── Background: rounded square, not circle ── -->
+  <rect x="0" y="0" width="500" height="500" rx="80" fill="url(#bgGrad)"/>
+
+  <!-- Very subtle grid lines for texture -->
+  <g opacity="0.04" clip-path="url(#bgClip)">
+    <line x1="0" y1="125" x2="500" y2="125" stroke="#4ade80" stroke-width="1"/>
+    <line x1="0" y1="250" x2="500" y2="250" stroke="#4ade80" stroke-width="1"/>
+    <line x1="0" y1="375" x2="500" y2="375" stroke="#4ade80" stroke-width="1"/>
+    <line x1="125" y1="0" x2="125" y2="500" stroke="#4ade80" stroke-width="1"/>
+    <line x1="250" y1="0" x2="250" y2="500" stroke="#4ade80" stroke-width="1"/>
+    <line x1="375" y1="0" x2="375" y2="500" stroke="#4ade80" stroke-width="1"/>
+  </g>
+
+  <!-- ── The "A" lettermark — chunky, geometric, custom ── -->
+  <!-- Outer A shape with hole (crossbar cutout via even-odd) -->
+  <path
+    fill-rule="evenodd"
+    fill="url(#aFill)"
+    filter="url(#depthShadow)"
+    d="
+      M 250 52
+      L 440 432
+      L 362 432
+      L 318 308
+      L 182 308
+      L 138 432
+      L 60 432
+      Z
+
+      M 250 148
+      L 296 280
+      L 204 280
+      Z
+    "
+  />
+
+  <!-- Thin cyan outline on the A — gives it that sharp neon edge -->
+  <path
+    fill-rule="evenodd"
+    fill="none"
+    stroke="#4ade80"
+    stroke-width="2"
+    stroke-linejoin="round"
+    opacity="0.55"
+    filter="url(#edgeGlow)"
+    d="
+      M 250 52
+      L 440 432
+      L 362 432
+      L 318 308
+      L 182 308
+      L 138 432
+      L 60 432
+      Z
+
+      M 250 148
+      L 296 280
+      L 204 280
+      Z
+    "
+  />
+
+  <!-- ── Diagonal slash lines — speed / anime motif ── -->
+  <!-- These go across the whole icon, brightest through the A -->
+
+  <!-- Background slash hints (outside A, very faint) -->
+  <g opacity="0.07">
+    <line x1="60" y1="180" x2="440" y2="340" stroke="#4ade80" stroke-width="28" stroke-linecap="round"/>
+  </g>
+
+  <!-- Main slash — clipped inside the A body -->
+  <g clip-path="url(#aClip)">
+    <!-- Bold slash through the A -->
+    <line
+      x1="80" y1="155"
+      x2="420" y2="345"
+      stroke="url(#cyanSlash)"
+      stroke-width="22"
+      stroke-linecap="round"
+      filter="url(#slashGlow)"
+      opacity="0.9"
+    />
+    <!-- Thinner parallel slash for motion trail -->
+    <line
+      x1="80" y1="195"
+      x2="380" y2="365"
+      stroke="#4ade80"
+      stroke-width="6"
+      stroke-linecap="round"
+      opacity="0.35"
+    />
+    <!-- Thinnest trailing slash -->
+    <line
+      x1="120" y1="130"
+      x2="420" y2="290"
+      stroke="#4ade80"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      opacity="0.2"
+    />
+  </g>
+
+  <!-- ── Slash "exit points" — tiny bright sparks where slash exits the A ── -->
+  <!-- Left exit near bottom-left leg -->
+  <circle cx="148" cy="418" r="4" fill="#4ade80" opacity="0.7" filter="url(#slashGlow)"/>
+  <!-- Right exit near top-right -->
+  <circle cx="370" cy="118" r="3" fill="#4ade80" opacity="0.5" filter="url(#slashGlow)"/>
+
+  <!-- ── Corner accent — single cyan bracket top-left ── -->
+  <path d="M 28 28 L 28 80 M 28 28 L 80 28" stroke="#4ade80" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.4"/>
+  <!-- Bottom-right bracket -->
+  <path d="M 472 472 L 472 420 M 472 472 L 420 472" stroke="#4ade80" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.4"/>
+
+</svg>
