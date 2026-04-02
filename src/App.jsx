@@ -1,8 +1,10 @@
 import "./index.css";
 import { useState, useEffect, useRef } from "react";
+import { flushSync } from "react-dom";
 import luffyImg from '../public/one-piece-luffy-thumbs-up.png'
 import { getSeasonalAnime, getTopAnime, searchAnime } from "./api/anilist";
 import AnimeCard from "./components/AnimeCard";
+import SkeletonCard from "./components/SkeletonCard";
 import AnimeDetail from "./components/AnimeDetail";
 import Modal from "./components/Modal";
 
@@ -19,6 +21,7 @@ function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [userID, setUserID] = useState(() => {
     const saved = localStorage.getItem("userID");
     return saved ? saved : null;
@@ -129,17 +132,19 @@ function App() {
           setHasNextPage(cached.pageInfo.hasNextPage);
           return;
         }
+        flushSync(() => setIsLoading(true));
         const data = await searchAnime(searchQuery, currentPage);
         if (canceled) {
-          return
+          return;
         }
         cacheRef.current[`${searchQuery}-${currentPage}`] = data;
         setSearchResult(data.media);
         setTotalPages(data.pageInfo.lastPage);
         setHasNextPage(data.pageInfo.hasNextPage);
+        setIsLoading(false);
       };
       fetchAnime();
-    }, 500);
+    }, 150);
     return () => {
       clearTimeout(timer);
       canceled = true;
@@ -308,7 +313,11 @@ function App() {
                 </button>
               ))}
           </div>
-          {searchResult.length === 0 ? (
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-4">
+              {Array.from({ length: 20 }).map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : searchResult.length === 0 ? (
             <div className="flex flex-col items-center justify-center mt-16 text-gray-500 gap-3">Sorry, No More Content! Click the button below to see our seasonal anime!
             <button 
             onClick={() => {
