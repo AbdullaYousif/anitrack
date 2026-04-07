@@ -1,6 +1,7 @@
 import "./index.css";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, use } from "react";
 import { flushSync } from "react-dom";
+import Select from "react-select";
 import luffyImg from "../public/one-piece-luffy-thumbs-up.png";
 import { getSeasonalAnime, getTopAnime, searchAnime } from "./api/anilist";
 import AnimeCard from "./components/AnimeCard";
@@ -8,6 +9,7 @@ import SkeletonCard from "./components/SkeletonCard";
 import AnimeDetail from "./components/AnimeDetail";
 import Modal from "./components/Modal";
 import Toast from "./components/Toast";
+import Watchlist from "./components/Watchlist";
 
 function App() {
   const [searchResult, setSearchResult] = useState([]);
@@ -24,6 +26,7 @@ function App() {
   const [hasNextPage, setHasNextPage] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
+  const [watchListFilter, setWatchlistFilter] = useState("All");
   const [userID, setUserID] = useState(() => {
     const saved = localStorage.getItem("userID");
     return saved ? saved : null;
@@ -374,30 +377,13 @@ function App() {
         </>
       )}
       {activeTab === "watchlist" && (
-        <>
-          <h1 className="text-2xl font-bold text-green-500 mb-2">
-            {" "}
-            My Watchlist{" "}
-          </h1>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
-            {Object.values(watchlist).map((item) => {
-              return (
-                <AnimeCard
-                  key={item.anime.id}
-                  inWatchlist={true}
-                  isLoggedIn={!!userToken}
-                  onToggle={() => toggleWatchlist(item.anime)}
-                  status={item.status}
-                  anime={item.anime}
-                  onChangeStatus={(newStatus) =>
-                    changeStatus(item.anime.id, newStatus)
-                  }
-                  onClick={() => setSelectedAnime(item.anime.id)}
-                ></AnimeCard>
-              );
-            })}
-          </div>
-        </>
+        <Watchlist
+          watchlist={watchlist}
+          onToggle={toggleWatchlist}
+          onChangeStatus={changeStatus}
+          onSelectAnime={setSelectedAnime}
+          isLoggedIn={!!userToken}
+        />
       )}
       {activeTab === "seasonal" && (
         <>
