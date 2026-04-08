@@ -3,7 +3,7 @@ import AnimeCard from "./AnimeCard";
 
 const STATUS_OPTIONS = ["All", "Watching", "Completed", "Plan to Watch"];
 
-function Watchlist({ watchlist, onToggle, onChangeStatus, onSelectAnime, isLoggedIn }) {
+function Watchlist({ watchlist, onToggle, onChangeStatus, onUpdateProgress, onSelectAnime, isLoggedIn }) {
   const [activeFilter, setActiveFilter] = useState("All");
 
   const filteredItems = Object.values(watchlist).filter((anime) => {
@@ -39,8 +39,10 @@ function Watchlist({ watchlist, onToggle, onChangeStatus, onSelectAnime, isLogge
             isLoggedIn={isLoggedIn}
             onToggle={() => onToggle(item.anime)}
             status={item.status}
+            episodesWatched={item.episodes_watched ?? 0}
             anime={item.anime}
             onChangeStatus={(newStatus) => onChangeStatus(item.anime.id, newStatus)}
+            onUpdateProgress={(newCount) => onUpdateProgress(item.anime.id, newCount)}
             onClick={() => onSelectAnime(item.anime.id)}
           />
         ))}

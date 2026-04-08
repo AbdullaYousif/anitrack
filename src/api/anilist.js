@@ -35,6 +35,7 @@ let query = `query ($search: String, $page: Int, $perPage: Int) {
         title { romaji english }
         coverImage {large }
         averageScore
+        episodes
       }
     }
   }`
@@ -69,6 +70,7 @@ export async function getSeasonalAnime(page) {
     title {romaji english}
     coverImage {large}
     averageScore
+    episodes
     }
     pageInfo {
     total
@@ -90,6 +92,7 @@ export async function getTopAnime(page) {
         title { romaji english }
         coverImage { large }
         averageScore
+        episodes
       }
     pageInfo {
     total
@@ -108,7 +111,7 @@ function normalizeAnimeData(media) {
         title: media.title.english || media.title.romaji ,
         images: {jpg: {large_image_url: media.coverImage.large}},
         score: media.averageScore ? media.averageScore /10 : null,
-
+        episodes: media.episodes ?? null,
     }
 }
 
