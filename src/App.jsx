@@ -1,7 +1,6 @@
 import "./index.css";
-import { useState, useEffect, useRef, use } from "react";
+import { useState, useEffect, useRef } from "react";
 import { flushSync } from "react-dom";
-import Select from "react-select";
 import luffyImg from "../public/one-piece-luffy-thumbs-up.png";
 import { getSeasonalAnime, getTopAnime, searchAnime } from "./api/anilist";
 import AnimeCard from "./components/AnimeCard";
@@ -26,7 +25,6 @@ function App() {
   const [hasNextPage, setHasNextPage] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
-  const [watchListFilter, setWatchlistFilter] = useState("All");
   const [userID, setUserID] = useState(() => {
     const saved = localStorage.getItem("userID");
     return saved ? saved : null;
@@ -89,6 +87,20 @@ function App() {
     setUserID(user_id);
     localStorage.setItem("userID", user_id);
   }
+  async function updateProgress(anime_id, newCount) {
+    setWatchlist({
+      ...watchlist,
+      [anime_id]: { ...watchlist[anime_id], episodes_watched: newCount },
+    });
+    await fetch(`http://localhost:3000/watchlist/${anime_id}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ episodes_watched: newCount }),
+    });
+  }
   async function changeStatus(anime_id, newStatus) {
     setWatchlist({
       ...watchlist,
@@ -119,7 +131,7 @@ function App() {
         const data = await res.json();
         const result = {};
         data.forEach((row) => {
-          result[row.anime_id] = { anime: row.anime_data, status: row.status };
+          result[row.anime_id] = { anime: row.anime_data, status: row.status, episodes_watched: row.episodes_watched };
         });
         setWatchlist(result);
       }
@@ -381,6 +393,7 @@ function App() {
           watchlist={watchlist}
           onToggle={toggleWatchlist}
           onChangeStatus={changeStatus}
+          onUpdateProgress={updateProgress}
           onSelectAnime={setSelectedAnime}
           isLoggedIn={!!userToken}
         />

@@ -15,7 +15,11 @@ watchlistRouter.post('/', authMiddleware, async (req,res)=> {
 })
 
 watchlistRouter.patch('/:anime_id', authMiddleware, async (req, res)=> {
-    const response = await pool.query('UPDATE watchlist SET status =$1 WHERE anime_id = $2 RETURNING *', [req.body.status, req.params.anime_id]);
+    if (req.body.episodes_watched !== undefined) {
+        const response = await pool.query('UPDATE watchlist SET episodes_watched = $1 WHERE anime_id = $2 RETURNING *', [req.body.episodes_watched, req.params.anime_id]);
+        return res.send(response.rows[0]);
+    }
+    const response = await pool.query('UPDATE watchlist SET status = $1 WHERE anime_id = $2 RETURNING *', [req.body.status, req.params.anime_id]);
     res.send(response.rows[0]);
 })
 watchlistRouter.delete('/:anime_id', authMiddleware, async (req, res)=> {
