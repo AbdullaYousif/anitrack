@@ -377,9 +377,9 @@ function App() {
                     isLoggedIn={!!userToken}
                     inWatchlist={!!watchlist[anime.id]}
                     onToggle={() => toggleWatchlist(anime)}
-                    onChangeStatus={(newStatus) =>
-                      changeStatus(anime.id, newStatus)
-                    }
+                    onChangeStatus={(newStatus) => changeStatus(anime.id, newStatus)}
+                    episodesWatched={watchlist[anime.id]?.episodes_watched ?? 0}
+                    onUpdateProgress={(newCount) => updateProgress(anime.id, newCount)}
                     onClick={() => setSelectedAnime(anime.id)}
                   ></AnimeCard>
                 );
@@ -409,9 +409,9 @@ function App() {
                   isLoggedIn={!!userToken}
                   inWatchlist={!!watchlist[anime.id]}
                   onToggle={() => toggleWatchlist(anime)}
-                  onChangeStatus={(newStatus) =>
-                    changeStatus(anime.id, newStatus)
-                  }
+                  onChangeStatus={(newStatus) => changeStatus(anime.id, newStatus)}
+                  episodesWatched={watchlist[anime.id]?.episodes_watched ?? 0}
+                  onUpdateProgress={(newCount) => updateProgress(anime.id, newCount)}
                   onClick={() => setSelectedAnime(anime.id)}
                 ></AnimeCard>
               );
@@ -450,9 +450,9 @@ function App() {
                   isLoggedIn={!!userToken}
                   inWatchlist={!!watchlist[anime.id]}
                   onToggle={() => toggleWatchlist(anime)}
-                  onChangeStatus={(newStatus) =>
-                    changeStatus(anime.id, newStatus)
-                  }
+                  onChangeStatus={(newStatus) => changeStatus(anime.id, newStatus)}
+                  episodesWatched={watchlist[anime.id]?.episodes_watched ?? 0}
+                  onUpdateProgress={(newCount) => updateProgress(anime.id, newCount)}
                   onClick={() => setSelectedAnime(anime.id)}
                 ></AnimeCard>
               );
