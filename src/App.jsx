@@ -1,5 +1,5 @@
 import "./index.css";
-import { useState, useEffect, useRef} from "react";
+import { useState, useEffect, useRef } from "react";
 import { flushSync } from "react-dom";
 import luffyImg from "../public/one-piece-luffy-thumbs-up.png";
 import {
@@ -61,11 +61,11 @@ function App() {
   const [seasonal, setSeasonal] = useState([]);
   const [topAnime, setTopAnime] = useState([]);
   const cacheRef = useRef({});
+  const sentinelRef = useRef(null);
   const [modalStatus, setModalStatus] = useState(false);
   const [modalType, setModalType] = useState("login");
   const [selectedAnime, setSelectedAnime] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState(getCurrentSeason());
@@ -125,6 +125,7 @@ function App() {
       });
     }
   }
+
   function handleAuthSuccess(userToken, username, user_id) {
     setUserToken(userToken);
     localStorage.setItem("userToken", userToken);
@@ -134,6 +135,7 @@ function App() {
     setUserID(user_id);
     localStorage.setItem("userID", user_id);
   }
+
   async function updateProgress(anime_id, newCount) {
     setWatchlist({
       ...watchlist,
@@ -148,6 +150,7 @@ function App() {
       body: JSON.stringify({ episodes_watched: newCount }),
     });
   }
+
   async function changeStatus(anime_id, newStatus) {
     setWatchlist({
       ...watchlist,
@@ -162,6 +165,7 @@ function App() {
       body: JSON.stringify({ status: newStatus }),
     });
   }
+
   useEffect(() => {
     localStorage.setItem("watchlist", JSON.stringify(watchlist));
   }, [watchlist]);
@@ -171,9 +175,7 @@ function App() {
       if (userToken) {
         const res = await fetch(`http://localhost:3000/watchlist/${userID}`, {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${userToken}`,
-          },
+          headers: { Authorization: `Bearer ${userToken}` },
         });
         const data = await res.json();
         const result = {};
@@ -190,72 +192,87 @@ function App() {
     fetchWatchlist();
   }, [userID, userToken]);
 
+  // Search
   useEffect(() => {
     if (activeTab !== "search") return;
     let canceled = false;
     const timer = setTimeout(() => {
       const fetchAnime = async () => {
-        if (cacheRef.current[`${searchQuery}-${currentPage}`]) {
-          const cached = cacheRef.current[`${searchQuery}-${currentPage}`];
-          setSearchResult(cached.media);
-          setTotalPages(cached.pageInfo.lastPage);
+        const cacheKey = `${searchQuery}-${currentPage}`;
+        if (cacheRef.current[cacheKey]) {
+          const cached = cacheRef.current[cacheKey];
+          if (currentPage === 1) setSearchResult(cached.media);
+          else setSearchResult((prev) => [...prev, ...cached.media]);
           setHasNextPage(cached.pageInfo.hasNextPage);
           return;
         }
-        flushSync(() => setIsLoading(true));
+        if (currentPage === 1) flushSync(() => setIsLoading(true));
         const data = await searchAnime(searchQuery, currentPage);
-        if (canceled) {
-          return;
-        }
-        cacheRef.current[`${searchQuery}-${currentPage}`] = data;
-        setSearchResult(data.media);
-        setTotalPages(data.pageInfo.lastPage);
+        if (canceled) return;
+        cacheRef.current[cacheKey] = data;
+        if (currentPage === 1) setSearchResult(data.media);
+        else setSearchResult((prev) => [...prev, ...data.media]);
         setHasNextPage(data.pageInfo.hasNextPage);
         setIsLoading(false);
       };
       fetchAnime();
     }, 150);
-    return () => {
-      clearTimeout(timer);
-      canceled = true;
-    }; //if query changes before 500m, cancel the timer
+    return () => { clearTimeout(timer); canceled = true; };
   }, [searchQuery, currentPage, activeTab]);
 
-  async function loadSeasonalAnime(
-    page = 1,
-    season = selectedSeason,
-    year = selectedYear,
-  ) {
-    const cacheKey = `seasonal-${season}-${year}-${page}`;
-    if (cacheRef.current[cacheKey]) {
-      const cached = cacheRef.current[cacheKey];
-      setSeasonal(cached.media);
-      setTotalPages(cached.pageInfo.lastPage);
-      setHasNextPage(cached.pageInfo.hasNextPage);
-      return;
-    }
-    const data = await getSeasonalAnime(page, season, year);
-    cacheRef.current[cacheKey] = data;
-    setSeasonal(data.media);
-    setTotalPages(data.pageInfo.lastPage);
-    setHasNextPage(data.pageInfo.hasNextPage);
-  }
+  // Seasonal
+  useEffect(() => {
+    if (activeTab !== "seasonal") return;
+    const fetchSeasonal = async () => {
+      const cacheKey = `seasonal-${selectedSeason}-${selectedYear}-${currentPage}`;
+      if (cacheRef.current[cacheKey]) {
+        const cached = cacheRef.current[cacheKey];
+        if (currentPage === 1) setSeasonal(cached.media);
+        else setSeasonal((prev) => [...prev, ...cached.media]);
+        setHasNextPage(cached.pageInfo.hasNextPage);
+        return;
+      }
+      const data = await getSeasonalAnime(currentPage, selectedSeason, selectedYear);
+      cacheRef.current[cacheKey] = data;
+      if (currentPage === 1) setSeasonal(data.media);
+      else setSeasonal((prev) => [...prev, ...data.media]);
+      setHasNextPage(data.pageInfo.hasNextPage);
+    };
+    fetchSeasonal();
+  }, [currentPage, activeTab, selectedSeason, selectedYear]);
 
-  async function loadTopAnime(page = 1) {
-    const cacheKey = `top -${page}`;
-    if (cacheRef.current[cacheKey]) {
-      const cached = cacheRef.current[cacheKey];
-      setTopAnime(cached.media);
-      setTotalPages(cached.pageInfo.lastPage);
-      setHasNextPage(cached.pageInfo.hasNextPage);
-      return;
-    }
-    const data = await getTopAnime(page);
-    cacheRef.current[cacheKey] = data;
-    setTopAnime(data.media);
-    setTotalPages(data.pageInfo.lastPage);
-    setHasNextPage(data.pageInfo.hasNextPage);
-  }
+  // Top
+  useEffect(() => {
+    if (activeTab !== "top") return;
+    const fetchTop = async () => {
+      const cacheKey = `top-${currentPage}`;
+      if (cacheRef.current[cacheKey]) {
+        const cached = cacheRef.current[cacheKey];
+        if (currentPage === 1) setTopAnime(cached.media);
+        else setTopAnime((prev) => [...prev, ...cached.media]);
+        setHasNextPage(cached.pageInfo.hasNextPage);
+        return;
+      }
+      const data = await getTopAnime(currentPage);
+      cacheRef.current[cacheKey] = data;
+      if (currentPage === 1) setTopAnime(data.media);
+      else setTopAnime((prev) => [...prev, ...data.media]);
+      setHasNextPage(data.pageInfo.hasNextPage);
+    };
+    fetchTop();
+  }, [currentPage, activeTab]);
+
+  useEffect(() => {
+    if (!sentinelRef.current) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasNextPage && !isLoading) {
+        setCurrentPage((p) => p + 1);
+      }
+    });
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasNextPage, isLoading, activeTab]);
+
   function showToast(message) {
     setToastMessage(message);
     setTimeout(() => setToastMessage(null), 4000);
@@ -267,56 +284,27 @@ function App() {
       <div id="nav-bar" className="flex gap-6 mb-8">
         {userToken && (
           <button
-            className={`px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${
-              activeTab === "watchlist"
-                ? "border-green-500 text-white"
-                : "border-transparent text-gray-400 hover:text-white"
-            }`}
+            className={`px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${activeTab === "watchlist" ? "border-green-500 text-white" : "border-transparent text-gray-400 hover:text-white"}`}
             onClick={() => setActiveTab("watchlist")}
           >
             My Watchlist
           </button>
         )}
         <button
-          className={`cursor-pointer px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${
-            activeTab === "search"
-              ? "border-green-500 text-white"
-              : "border-transparent text-gray-400 hover:text-white"
-          }`}
-          onClick={() => {
-            setActiveTab("search");
-            setCurrentPage(1);
-          }}
+          className={`cursor-pointer px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${activeTab === "search" ? "border-green-500 text-white" : "border-transparent text-gray-400 hover:text-white"}`}
+          onClick={() => { setActiveTab("search"); setCurrentPage(1); }}
         >
           Search
         </button>
-
         <button
-          className={` cursor-pointer px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${
-            activeTab === "seasonal"
-              ? "border-green-500 text-white"
-              : "border-transparent text-gray-400 hover:text-white"
-          }`}
-          onClick={() => {
-            setActiveTab("seasonal");
-            setCurrentPage(1);
-            loadSeasonalAnime(1);
-          }}
+          className={`cursor-pointer px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${activeTab === "seasonal" ? "border-green-500 text-white" : "border-transparent text-gray-400 hover:text-white"}`}
+          onClick={() => { setActiveTab("seasonal"); setCurrentPage(1); }}
         >
           Seasonal Anime
         </button>
-
         <button
-          className={` cursor-pointer px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${
-            activeTab === "top"
-              ? "border-green-500 text-white cursor-pointer"
-              : "border-transparent text-gray-400 hover:text-white"
-          }`}
-          onClick={() => {
-            setActiveTab("top");
-            setCurrentPage(1);
-            loadTopAnime(1);
-          }}
+          className={`cursor-pointer px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${activeTab === "top" ? "border-green-500 text-white" : "border-transparent text-gray-400 hover:text-white"}`}
+          onClick={() => { setActiveTab("top"); setCurrentPage(1); }}
         >
           Top Anime
         </button>
@@ -324,10 +312,7 @@ function App() {
           {!userToken && (
             <button
               className="cursor-pointer px-4 py-2 text-sm font-semibold text-gray-400 hover:text-white"
-              onClick={() => {
-                setModalStatus(true);
-                setModalType("register");
-              }}
+              onClick={() => { setModalStatus(true); setModalType("register"); }}
             >
               Sign Up
             </button>
@@ -335,27 +320,19 @@ function App() {
           {!userToken && (
             <button
               className="cursor-pointer px-4 py-2 text-sm font-semibold bg-green-500 hover:bg-green-500 rounded-lg"
-              onClick={() => {
-                setModalStatus(true);
-                setModalType("login");
-              }}
+              onClick={() => { setModalStatus(true); setModalType("login"); }}
             >
               Login
             </button>
           )}
           {userToken && (
             <>
-              <span className="cursor-pointer text-gray-400 text-sm">
-                {" "}
+              <span className="text-gray-400 text-sm">
                 <span className="text-white font-semibold">{username}</span>
               </span>
               <button
                 className="px-4 py-2 text-sm font-semibold text-gray-400 hover:text-white"
-                onClick={() => {
-                  setUserToken(null);
-                  setUsername(null);
-                  localStorage.removeItem("userToken");
-                }}
+                onClick={() => { setUserToken(null); setUsername(null); localStorage.removeItem("userToken"); }}
               >
                 Logout
               </button>
@@ -363,9 +340,8 @@ function App() {
           )}
         </div>
       </div>
-      <p className="text-gray-400 mb-8">
-        Never lose track of your favourite shows
-      </p>
+      <p className="text-gray-400 mb-8">Never lose track of your favourite shows</p>
+
       {activeTab === "search" && (
         <>
           <input
@@ -373,87 +349,47 @@ function App() {
             className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg outline-none"
             type="text"
             value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setCurrentPage(1);
-            }}
+            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
           />
-          <div className="flex gap-2 mt-4 justify-center">
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter(
-                (pageNum) =>
-                  pageNum >= currentPage - 1 &&
-                  pageNum <= currentPage + (hasNextPage ? 4 : 0),
-              )
-              .map((pageNum) => (
-                <button
-                  key={pageNum}
-                  onClick={() => setCurrentPage(pageNum)}
-                  className={`px-3 py-1 rounded text-sm ${currentPage === pageNum ? "bg-green-500 text-white" : "bg-gray-800 text-gray-400 hover:text-white"}`}
-                >
-                  {pageNum}
-                </button>
-              ))}
-          </div>
           {isLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
-              {Array.from({ length: 20 }).map((_, i) => (
-                <SkeletonCard key={i} />
-              ))}
+              {Array.from({ length: 20 }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
           ) : searchResult.length === 0 ? (
             <div className="flex flex-col items-center justify-center mt-16 text-gray-500 gap-3">
-              Sorry, No More Content! Click the button below to see our seasonal
-              anime!
+              Sorry, No More Content! Click the button below to see our seasonal anime!
               <button
-                onClick={() => {
-                  setActiveTab("seasonal");
-                  setCurrentPage(1);
-                  loadSeasonalAnime(1);
-                }}
+                onClick={() => { setActiveTab("seasonal"); setCurrentPage(1); }}
                 className="cursor-pointer px-4 py-2 text-sm text-black font-semibold bg-green-500 hover:bg-green-500 rounded-lg"
               >
                 Click Here
               </button>
-              <img
-                src={luffyImg}
-                width={500}
-                style={{ transform: "translate(110px" }}
-                alt="Luffy Image"
-              />
+              <img src={luffyImg} width={500} style={{ transform: "translate(110px" }} alt="Luffy Image" />
             </div>
           ) : (
             <>
-              <div className="flex mb-2">
-                <SortSelect sortBy={sortBy} setSortBy={setSortBy} />
-              </div>
+              <div className="flex mb-2"><SortSelect sortBy={sortBy} setSortBy={setSortBy} /></div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
-                {sortAnime(searchResult, sortBy).map((anime) => {
-                  return (
-                    <AnimeCard
-                      key={anime.id}
-                      anime={anime}
-                      isLoggedIn={!!userToken}
-                      inWatchlist={!!watchlist[anime.id]}
-                      onToggle={() => toggleWatchlist(anime)}
-                      onChangeStatus={(newStatus) =>
-                        changeStatus(anime.id, newStatus)
-                      }
-                      episodesWatched={
-                        watchlist[anime.id]?.episodes_watched ?? 0
-                      }
-                      onUpdateProgress={(newCount) =>
-                        updateProgress(anime.id, newCount)
-                      }
-                      onClick={() => setSelectedAnime(anime.id)}
-                    ></AnimeCard>
-                  );
-                })}
+                {sortAnime(searchResult, sortBy).map((anime) => (
+                  <AnimeCard
+                    key={anime.id}
+                    anime={anime}
+                    isLoggedIn={!!userToken}
+                    inWatchlist={!!watchlist[anime.id]}
+                    onToggle={() => toggleWatchlist(anime)}
+                    onChangeStatus={(newStatus) => changeStatus(anime.id, newStatus)}
+                    episodesWatched={watchlist[anime.id]?.episodes_watched ?? 0}
+                    onUpdateProgress={(newCount) => updateProgress(anime.id, newCount)}
+                    onClick={() => setSelectedAnime(anime.id)}
+                  />
+                ))}
               </div>
+              <div ref={sentinelRef} className="h-8" />
             </>
           )}
         </>
       )}
+
       {activeTab === "watchlist" && (
         <Watchlist
           watchlist={watchlist}
@@ -464,26 +400,19 @@ function App() {
           isLoggedIn={!!userToken}
         />
       )}
+
       {activeTab === "seasonal" && (
         <>
           <div className="flex flex-col gap-2 mb-6">
             <h1 className="text-2xl font-bold text-green-500">
-              {selectedSeason.charAt(0) + selectedSeason.slice(1).toLowerCase()}{" "}
-              {selectedYear}
+              {selectedSeason.charAt(0) + selectedSeason.slice(1).toLowerCase()} {selectedYear}
             </h1>
             <div className="flex items-center gap-2">
               {seasonalFilter.map((season) => (
                 <button
                   key={season}
-                  onClick={() => {
-                    setSelectedSeason(season);
-                    loadSeasonalAnime(1, season, selectedYear);
-                  }}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
-                    selectedSeason === season
-                      ? "bg-green-500 text-black"
-                      : "bg-gray-800 text-gray-400 hover:text-white"
-                  }`}
+                  onClick={() => { setSelectedSeason(season); setCurrentPage(1); }}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors cursor-pointer ${selectedSeason === season ? "bg-green-500 text-black" : "bg-gray-800 text-gray-400 hover:text-white"}`}
                 >
                   {season.charAt(0) + season.slice(1).toLowerCase()}
                 </button>
@@ -491,134 +420,63 @@ function App() {
               <div className="w-px h-4 bg-gray-700 mx-1" />
               <select
                 value={selectedYear}
-                onChange={(e) => {
-                  const year = parseInt(e.target.value);
-                  setSelectedYear(year);
-                  loadSeasonalAnime(1, selectedSeason, year);
-                }}
+                onChange={(e) => { const year = parseInt(e.target.value); setSelectedYear(year); setCurrentPage(1); }}
                 className="cursor-pointer bg-gray-800 text-xs rounded-full px-3 py-1 outline-none border-none font-semibold text-gray-400 hover:text-white"
               >
-                {Array.from(
-                  { length: new Date().getFullYear() - 2000 + 1 },
-                  (_, i) => 2000 + i,
-                )
-                  .reverse()
-                  .map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
+                {Array.from({ length: new Date().getFullYear() - 2000 + 1 }, (_, i) => 2000 + i)
+                  .reverse().map((year) => <option key={year} value={year}>{year}</option>)}
               </select>
             </div>
           </div>
-          <div className="flex mb-2">
-            <SortSelect sortBy={sortBy} setSortBy={setSortBy} />
-          </div>
+          <div className="flex mb-2"><SortSelect sortBy={sortBy} setSortBy={setSortBy} /></div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
-            {sortAnime(seasonal, sortBy).map((anime) => {
-              return (
-                <AnimeCard
-                  key={anime.id}
-                  anime={anime}
-                  isLoggedIn={!!userToken}
-                  inWatchlist={!!watchlist[anime.id]}
-                  onToggle={() => toggleWatchlist(anime)}
-                  onChangeStatus={(newStatus) =>
-                    changeStatus(anime.id, newStatus)
-                  }
-                  episodesWatched={watchlist[anime.id]?.episodes_watched ?? 0}
-                  onUpdateProgress={(newCount) =>
-                    updateProgress(anime.id, newCount)
-                  }
-                  onClick={() => setSelectedAnime(anime.id)}
-                ></AnimeCard>
-              );
-            })}
+            {sortAnime(seasonal, sortBy).map((anime) => (
+              <AnimeCard
+                key={anime.id}
+                anime={anime}
+                isLoggedIn={!!userToken}
+                inWatchlist={!!watchlist[anime.id]}
+                onToggle={() => toggleWatchlist(anime)}
+                onChangeStatus={(newStatus) => changeStatus(anime.id, newStatus)}
+                episodesWatched={watchlist[anime.id]?.episodes_watched ?? 0}
+                onUpdateProgress={(newCount) => updateProgress(anime.id, newCount)}
+                onClick={() => setSelectedAnime(anime.id)}
+              />
+            ))}
           </div>
-          <div className="flex gap-2 mt-4 justify-center">
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter(
-                (pageNum) =>
-                  pageNum >= currentPage - 1 &&
-                  pageNum <= currentPage + (hasNextPage ? 4 : 0),
-              )
-              .map((pageNum) => (
-                <button
-                  key={pageNum}
-                  onClick={() => {
-                    setCurrentPage(pageNum);
-                    loadSeasonalAnime(pageNum);
-                  }}
-                  className={`px-3 py-1 rounded text-sm ${currentPage === pageNum ? "bg-green-500 text-white" : "bg-gray-800 text-gray-400 hover:text-white"}`}
-                >
-                  {pageNum}
-                </button>
-              ))}
-          </div>
+          <div ref={sentinelRef} className="h-8" />
         </>
       )}
+
       {activeTab === "top" && (
         <>
-          <div className="flex mb-2">
-            <SortSelect sortBy={sortBy} setSortBy={setSortBy} />
-          </div>
+          <div className="flex mb-2"><SortSelect sortBy={sortBy} setSortBy={setSortBy} /></div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
-            {sortAnime(topAnime, sortBy).map((anime) => {
-              return (
-                <AnimeCard
-                  key={anime.id}
-                  anime={anime}
-                  isLoggedIn={!!userToken}
-                  inWatchlist={!!watchlist[anime.id]}
-                  onToggle={() => toggleWatchlist(anime)}
-                  onChangeStatus={(newStatus) =>
-                    changeStatus(anime.id, newStatus)
-                  }
-                  episodesWatched={watchlist[anime.id]?.episodes_watched ?? 0}
-                  onUpdateProgress={(newCount) =>
-                    updateProgress(anime.id, newCount)
-                  }
-                  onClick={() => setSelectedAnime(anime.id)}
-                ></AnimeCard>
-              );
-            })}
+            {sortAnime(topAnime, sortBy).map((anime) => (
+              <AnimeCard
+                key={anime.id}
+                anime={anime}
+                isLoggedIn={!!userToken}
+                inWatchlist={!!watchlist[anime.id]}
+                onToggle={() => toggleWatchlist(anime)}
+                onChangeStatus={(newStatus) => changeStatus(anime.id, newStatus)}
+                episodesWatched={watchlist[anime.id]?.episodes_watched ?? 0}
+                onUpdateProgress={(newCount) => updateProgress(anime.id, newCount)}
+                onClick={() => setSelectedAnime(anime.id)}
+              />
+            ))}
           </div>
-          <div className="flex gap-2 mt-4 justify-center">
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter(
-                (pageNum) =>
-                  pageNum >= currentPage - 1 &&
-                  pageNum <= currentPage + (hasNextPage ? 4 : 0),
-              )
-              .map((pageNum) => (
-                <button
-                  key={pageNum}
-                  onClick={() => {
-                    setCurrentPage(pageNum);
-                    loadTopAnime(pageNum);
-                  }}
-                  className={`px-3 py-1 rounded text-sm ${currentPage === pageNum ? "bg-green-500 text-white" : "bg-gray-800 text-gray-400 hover:text-white"}`}
-                >
-                  {pageNum}
-                </button>
-              ))}
-          </div>
+          <div ref={sentinelRef} className="h-8" />
         </>
       )}
+
       {modalStatus && (
-        <Modal
-          type={modalType}
-          onClose={() => setModalStatus(false)}
-          onAuthSuccess={handleAuthSuccess}
-        ></Modal>
+        <Modal type={modalType} onClose={() => setModalStatus(false)} onAuthSuccess={handleAuthSuccess} />
       )}
       {selectedAnime && (
-        <AnimeDetail
-          id={selectedAnime}
-          onClose={() => setSelectedAnime(null)}
-        ></AnimeDetail>
+        <AnimeDetail id={selectedAnime} onClose={() => setSelectedAnime(null)} />
       )}
-      {toastMessage && <Toast message={toastMessage}></Toast>}
+      {toastMessage && <Toast message={toastMessage} />}
     </div>
   );
 }
