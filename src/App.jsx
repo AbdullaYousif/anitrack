@@ -2,7 +2,12 @@ import "./index.css";
 import { useState, useEffect, useRef } from "react";
 import { flushSync } from "react-dom";
 import luffyImg from "../public/one-piece-luffy-thumbs-up.png";
-import { getSeasonalAnime, getTopAnime, searchAnime } from "./api/anilist";
+import {
+  getSeasonalAnime,
+  getTopAnime,
+  searchAnime,
+  getCurrentSeason,
+} from "./api/anilist";
 import AnimeCard from "./components/AnimeCard";
 import SkeletonCard from "./components/SkeletonCard";
 import AnimeDetail from "./components/AnimeDetail";
@@ -12,6 +17,7 @@ import Watchlist from "./components/Watchlist";
 
 function App() {
   const [searchResult, setSearchResult] = useState([]);
+  const seasonalFilter = ["WINTER", "SPRING", "SUMMER", "FALL"];
   const [activeTab, setActiveTab] = useState("search");
   const [searchQuery, setSearchQuery] = useState("One Piece");
   const [seasonal, setSeasonal] = useState([]);
@@ -24,6 +30,8 @@ function App() {
   const [totalPages, setTotalPages] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedSeason, setSelectedSeason] = useState(getCurrentSeason());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [toastMessage, setToastMessage] = useState(null);
   const [userID, setUserID] = useState(() => {
     const saved = localStorage.getItem("userID");
@@ -131,7 +139,11 @@ function App() {
         const data = await res.json();
         const result = {};
         data.forEach((row) => {
-          result[row.anime_id] = { anime: row.anime_data, status: row.status, episodes_watched: row.episodes_watched };
+          result[row.anime_id] = {
+            anime: row.anime_data,
+            status: row.status,
+            episodes_watched: row.episodes_watched,
+          };
         });
         setWatchlist(result);
       }
@@ -170,8 +182,12 @@ function App() {
     }; //if query changes before 500m, cancel the timer
   }, [searchQuery, currentPage, activeTab]);
 
-  async function loadSeasonalAnime(page = 1) {
-    const cacheKey = `seasonal-${page}`;
+  async function loadSeasonalAnime(
+    page = 1,
+    season = selectedSeason,
+    year = selectedYear,
+  ) {
+    const cacheKey = `seasonal-${season}-${year}-${page}`;
     if (cacheRef.current[cacheKey]) {
       const cached = cacheRef.current[cacheKey];
       setSeasonal(cached.media);
@@ -179,7 +195,7 @@ function App() {
       setHasNextPage(cached.pageInfo.hasNextPage);
       return;
     }
-    const data = await getSeasonalAnime(page);
+    const data = await getSeasonalAnime(page, season, year);
     cacheRef.current[cacheKey] = data;
     setSeasonal(data.media);
     setTotalPages(data.pageInfo.lastPage);
@@ -377,9 +393,13 @@ function App() {
                     isLoggedIn={!!userToken}
                     inWatchlist={!!watchlist[anime.id]}
                     onToggle={() => toggleWatchlist(anime)}
-                    onChangeStatus={(newStatus) => changeStatus(anime.id, newStatus)}
+                    onChangeStatus={(newStatus) =>
+                      changeStatus(anime.id, newStatus)
+                    }
                     episodesWatched={watchlist[anime.id]?.episodes_watched ?? 0}
-                    onUpdateProgress={(newCount) => updateProgress(anime.id, newCount)}
+                    onUpdateProgress={(newCount) =>
+                      updateProgress(anime.id, newCount)
+                    }
                     onClick={() => setSelectedAnime(anime.id)}
                   ></AnimeCard>
                 );
@@ -400,6 +420,46 @@ function App() {
       )}
       {activeTab === "seasonal" && (
         <>
+          <div className="flex flex-col gap-2 mb-6">
+            <h1 className="text-2xl font-bold text-green-500">
+              {selectedSeason.charAt(0) + selectedSeason.slice(1).toLowerCase()} {selectedYear}
+            </h1>
+            <div className="flex items-center gap-2">
+              {seasonalFilter.map((season) => (
+                <button
+                  key={season}
+                  onClick={() => {
+                    setSelectedSeason(season);
+                    loadSeasonalAnime(1, season, selectedYear);
+                  }}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
+                    selectedSeason === season
+                      ? "bg-green-500 text-black"
+                      : "bg-gray-800 text-gray-400 hover:text-white"
+                  }`}
+                >
+                  {season.charAt(0) + season.slice(1).toLowerCase()}
+                </button>
+              ))}
+              <div className="w-px h-4 bg-gray-700 mx-1" />
+              <select
+                value={selectedYear}
+                onChange={(e) => {
+                  const year = parseInt(e.target.value);
+                  setSelectedYear(year);
+                  loadSeasonalAnime(1, selectedSeason, year);
+                }}
+                className="cursor-pointer bg-gray-800 text-xs rounded-full px-3 py-1 outline-none border-none font-semibold text-gray-400 hover:text-white"
+              >
+                {Array.from(
+                  { length: new Date().getFullYear() - 2000 + 1 },
+                  (_, i) => 2000 + i
+                ).reverse().map((year) => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
             {seasonal.map((anime) => {
               return (
@@ -409,9 +469,13 @@ function App() {
                   isLoggedIn={!!userToken}
                   inWatchlist={!!watchlist[anime.id]}
                   onToggle={() => toggleWatchlist(anime)}
-                  onChangeStatus={(newStatus) => changeStatus(anime.id, newStatus)}
+                  onChangeStatus={(newStatus) =>
+                    changeStatus(anime.id, newStatus)
+                  }
                   episodesWatched={watchlist[anime.id]?.episodes_watched ?? 0}
-                  onUpdateProgress={(newCount) => updateProgress(anime.id, newCount)}
+                  onUpdateProgress={(newCount) =>
+                    updateProgress(anime.id, newCount)
+                  }
                   onClick={() => setSelectedAnime(anime.id)}
                 ></AnimeCard>
               );
@@ -450,9 +514,13 @@ function App() {
                   isLoggedIn={!!userToken}
                   inWatchlist={!!watchlist[anime.id]}
                   onToggle={() => toggleWatchlist(anime)}
-                  onChangeStatus={(newStatus) => changeStatus(anime.id, newStatus)}
+                  onChangeStatus={(newStatus) =>
+                    changeStatus(anime.id, newStatus)
+                  }
                   episodesWatched={watchlist[anime.id]?.episodes_watched ?? 0}
-                  onUpdateProgress={(newCount) => updateProgress(anime.id, newCount)}
+                  onUpdateProgress={(newCount) =>
+                    updateProgress(anime.id, newCount)
+                  }
                   onClick={() => setSelectedAnime(anime.id)}
                 ></AnimeCard>
               );
