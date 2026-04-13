@@ -2,7 +2,7 @@
 
 A full-stack anime tracking app. Search for anime, manage a personal watchlist, track episode progress, and browse seasonal and top-rated shows.
 
-**Live demo:** _coming soon_
+**Live demo:** [URL](https://anitrack-alpha.vercel.app/)
 
 ---
 
