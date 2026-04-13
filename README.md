@@ -1,16 +1,26 @@
-# React + Vite
+# AniTrack
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack anime tracking app. Search for anime, manage a personal watchlist, track episode progress, and browse seasonal and top-rated shows.
 
-Currently, two official plugins are available:
+**Live demo:** _coming soon_
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Search** — debounced search with per-query caching
+- **Watchlist** — add/remove anime, filter by status (Watching, Completed, Plan to Watch)
+- **Episode tracking** — log progress with +/− buttons or direct input, capped at total episodes
+- **Seasonal browser** — browse any season from 2000 to present
+- **Top anime** — ranked by score via Anilist
+- **Infinite scroll** — loads more as you scroll
+- **Sort** — sort any tab by score or title
+- **Auth** — JWT authentication with bcrypt password hashing
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+**Frontend** — React, Vite, Tailwind CSS
+
+**Backend** — Node.js, Express, PostgreSQL
+
+**API** — [Anilist GraphQL API](https://anilist.gitbook.io/anilist-apiv2-docs/)
