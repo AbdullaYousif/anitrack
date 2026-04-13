@@ -96,7 +96,7 @@ function App() {
         const { [anime.id]: _, ...rest } = current;
         return rest;
       });
-      await fetch(`http://localhost:3000/watchlist/${anime.id}`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/watchlist/${anime.id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${userToken}`,
@@ -110,7 +110,7 @@ function App() {
         [anime.id]: { anime, status: "Plan to Watch" },
       });
       showToast(`Added ${anime.title} to Watchlist`);
-      await fetch(`http://localhost:3000/watchlist/`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/watchlist/`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${userToken}`,
@@ -141,7 +141,7 @@ function App() {
       ...watchlist,
       [anime_id]: { ...watchlist[anime_id], episodes_watched: newCount },
     });
-    await fetch(`http://localhost:3000/watchlist/${anime_id}`, {
+    await fetch(`${import.meta.env.VITE_API_URL}/watchlist/${anime_id}`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${userToken}`,
@@ -156,7 +156,7 @@ function App() {
       ...watchlist,
       [anime_id]: { ...watchlist[anime_id], status: newStatus },
     });
-    await fetch(`http://localhost:3000/watchlist/${anime_id}`, {
+    await fetch(`${import.meta.env.VITE_API_URL}/watchlist/${anime_id}`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${userToken}`,
@@ -173,7 +173,7 @@ function App() {
   useEffect(() => {
     const fetchWatchlist = async () => {
       if (userToken) {
-        const res = await fetch(`http://localhost:3000/watchlist/${userID}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/watchlist/${userID}`, {
           method: "GET",
           headers: { Authorization: `Bearer ${userToken}` },
         });
@@ -332,7 +332,7 @@ function App() {
               </span>
               <button
                 className="px-4 py-2 text-sm font-semibold text-gray-400 hover:text-white"
-                onClick={() => { setUserToken(null); setUsername(null); localStorage.removeItem("userToken"); }}
+                onClick={() => { setUserToken(null); setUsername(null); setUserID(null); localStorage.removeItem("userToken"); localStorage.removeItem("username"); localStorage.removeItem("userID"); localStorage.removeItem("watchlist"); setWatchlist({}); }}
               >
                 Logout
               </button>
@@ -344,13 +344,19 @@ function App() {
 
       {activeTab === "search" && (
         <>
-          <input
-            id="search-box"
-            className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg outline-none"
-            type="text"
-            value={searchQuery}
-            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-          />
+          <div className="relative w-96">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+            </svg>
+            <input
+              id="search-box"
+              className="w-full bg-gray-900 text-white text-sm pl-9 pr-4 py-2 rounded-lg outline-none border border-transparent focus:border-green-500 transition-colors"
+              type="text"
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+              placeholder="Search anime..."
+            />
+          </div>
           {isLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
               {Array.from({ length: 20 }).map((_, i) => <SkeletonCard key={i} />)}
@@ -471,7 +477,12 @@ function App() {
       )}
 
       {modalStatus && (
-        <Modal type={modalType} onClose={() => setModalStatus(false)} onAuthSuccess={handleAuthSuccess} />
+        <Modal
+          type={modalType}
+          onClose={() => setModalStatus(false)}
+          onAuthSuccess={handleAuthSuccess}
+          onSwitchType={() => setModalType(modalType === "login" ? "register" : "login")}
+        />
       )}
       {selectedAnime && (
         <AnimeDetail id={selectedAnime} onClose={() => setSelectedAnime(null)} />
