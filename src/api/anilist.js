@@ -44,25 +44,15 @@ let query = `query ($search: String, $page: Int, $perPage: Int) {
 
 }
 
-export async function getSeasonalAnime(page) {
-    const currentDate = new Date();
-    const monthIndex = currentDate.getMonth();
-    const currentYear = new Date()
-    const seasonYear = currentYear.getFullYear();
-    let season = '';
-    // Get month to determine Season for API call
-    if (monthIndex <=2) {
-        season = 'WINTER';
-    }
-    else if (monthIndex<=5) {
-        season = 'SPRING';
-    }
-    else if (monthIndex<=8) {
-        season = 'SUMMER'
-    }
-    else {
-        season = 'FALL';
-    }
+export function getCurrentSeason() {
+    const month = new Date().getMonth();
+    if (month <= 2) return 'WINTER';
+    if (month <= 5) return 'SPRING';
+    if (month <= 8) return 'SUMMER';
+    return 'FALL';
+}
+
+export async function getSeasonalAnime(page, season, year) {
     let query = `query ($season: MediaSeason, $seasonYear: Int, $page: Int $perPage: Int){
     Page(page: $page, perPage: $perPage) {
     media(season: $season, seasonYear: $seasonYear, type: ANIME){
@@ -79,9 +69,8 @@ export async function getSeasonalAnime(page) {
     }
     }
     }`
-    const queryData = await anilistQuery(query, {season,seasonYear,page, perPage: 20});
- return {media: queryData.Page.media.map(normalizeAnimeData), pageInfo: queryData.Page.pageInfo}
-
+    const queryData = await anilistQuery(query, {season, seasonYear: year, page, perPage: 20});
+    return {media: queryData.Page.media.map(normalizeAnimeData), pageInfo: queryData.Page.pageInfo}
 }
 
 export async function getTopAnime(page) {

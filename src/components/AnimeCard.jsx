@@ -30,7 +30,7 @@ function AnimeCard({ anime, isLoggedIn, inWatchlist, onToggle, episodesWatched, 
         </span>
       )}
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-2 gap-1.5">
+      <div className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-2 gap-1.5">
         <p className="text-xs font-semibold leading-tight line-clamp-2">{anime.title}</p>
 
         {isLoggedIn && (
