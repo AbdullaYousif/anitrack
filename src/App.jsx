@@ -72,6 +72,7 @@ function App() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [sortBy, setSortBy] = useState("score-desc");
   const [toastMessage, setToastMessage] = useState(null);
+  const [fetchError, setFetchError] = useState(null);
   const [userID, setUserID] = useState(() => {
     const saved = localStorage.getItem("userID");
     return saved ? saved : null;
@@ -224,19 +225,28 @@ function App() {
   useEffect(() => {
     if (activeTab !== "seasonal") return;
     const fetchSeasonal = async () => {
-      const cacheKey = `seasonal-${selectedSeason}-${selectedYear}-${currentPage}`;
-      if (cacheRef.current[cacheKey]) {
-        const cached = cacheRef.current[cacheKey];
-        if (currentPage === 1) setSeasonal(cached.media);
-        else setSeasonal((prev) => [...prev, ...cached.media]);
-        setHasNextPage(cached.pageInfo.hasNextPage);
-        return;
+      try {
+        setFetchError(null);
+        if (currentPage === 1) setIsLoading(true);
+        const cacheKey = `seasonal-${selectedSeason}-${selectedYear}-${currentPage}`;
+        if (cacheRef.current[cacheKey]) {
+          const cached = cacheRef.current[cacheKey];
+          if (currentPage === 1) setSeasonal(cached.media);
+          else setSeasonal((prev) => [...prev, ...cached.media]);
+          setHasNextPage(cached.pageInfo.hasNextPage);
+          setIsLoading(false);
+          return;
+        }
+        const data = await getSeasonalAnime(currentPage, selectedSeason, selectedYear);
+        cacheRef.current[cacheKey] = data;
+        if (currentPage === 1) setSeasonal(data.media);
+        else setSeasonal((prev) => [...prev, ...data.media]);
+        setHasNextPage(data.pageInfo.hasNextPage);
+      } catch {
+        setFetchError("Failed to load seasonal anime. Please try again.");
+      } finally {
+        setIsLoading(false);
       }
-      const data = await getSeasonalAnime(currentPage, selectedSeason, selectedYear);
-      cacheRef.current[cacheKey] = data;
-      if (currentPage === 1) setSeasonal(data.media);
-      else setSeasonal((prev) => [...prev, ...data.media]);
-      setHasNextPage(data.pageInfo.hasNextPage);
     };
     fetchSeasonal();
   }, [currentPage, activeTab, selectedSeason, selectedYear]);
@@ -245,19 +255,28 @@ function App() {
   useEffect(() => {
     if (activeTab !== "top") return;
     const fetchTop = async () => {
-      const cacheKey = `top-${currentPage}`;
-      if (cacheRef.current[cacheKey]) {
-        const cached = cacheRef.current[cacheKey];
-        if (currentPage === 1) setTopAnime(cached.media);
-        else setTopAnime((prev) => [...prev, ...cached.media]);
-        setHasNextPage(cached.pageInfo.hasNextPage);
-        return;
+      try {
+        setFetchError(null);
+        if (currentPage === 1) setIsLoading(true);
+        const cacheKey = `top-${currentPage}`;
+        if (cacheRef.current[cacheKey]) {
+          const cached = cacheRef.current[cacheKey];
+          if (currentPage === 1) setTopAnime(cached.media);
+          else setTopAnime((prev) => [...prev, ...cached.media]);
+          setHasNextPage(cached.pageInfo.hasNextPage);
+          setIsLoading(false);
+          return;
+        }
+        const data = await getTopAnime(currentPage);
+        cacheRef.current[cacheKey] = data;
+        if (currentPage === 1) setTopAnime(data.media);
+        else setTopAnime((prev) => [...prev, ...data.media]);
+        setHasNextPage(data.pageInfo.hasNextPage);
+      } catch {
+        setFetchError("Failed to load anime. Please try again.");
+      } finally {
+        setIsLoading(false);
       }
-      const data = await getTopAnime(currentPage);
-      cacheRef.current[cacheKey] = data;
-      if (currentPage === 1) setTopAnime(data.media);
-      else setTopAnime((prev) => [...prev, ...data.media]);
-      setHasNextPage(data.pageInfo.hasNextPage);
     };
     fetchTop();
   }, [currentPage, activeTab]);
@@ -435,6 +454,12 @@ function App() {
             </div>
           </div>
           <div className="flex mb-2"><SortSelect sortBy={sortBy} setSortBy={setSortBy} /></div>
+          {fetchError && <p className="text-red-400 text-sm mt-4">{fetchError}</p>}
+          {isLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
+              {Array.from({ length: 20 }).map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
             {sortAnime(seasonal, sortBy).map((anime) => (
               <AnimeCard
@@ -450,6 +475,7 @@ function App() {
               />
             ))}
           </div>
+          )}
           <div ref={sentinelRef} className="h-8" />
         </>
       )}
@@ -457,6 +483,12 @@ function App() {
       {activeTab === "top" && (
         <>
           <div className="flex mb-2"><SortSelect sortBy={sortBy} setSortBy={setSortBy} /></div>
+          {fetchError && <p className="text-red-400 text-sm mt-4">{fetchError}</p>}
+          {isLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
+              {Array.from({ length: 20 }).map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
             {sortAnime(topAnime, sortBy).map((anime) => (
               <AnimeCard
@@ -472,6 +504,7 @@ function App() {
               />
             ))}
           </div>
+          )}
           <div ref={sentinelRef} className="h-8" />
         </>
       )}

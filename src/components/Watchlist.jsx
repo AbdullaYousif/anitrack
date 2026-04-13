@@ -31,6 +31,11 @@ function Watchlist({ watchlist, onToggle, onChangeStatus, onUpdateProgress, onSe
           ))}
         </div>
       </div>
+      {filteredItems.length === 0 && (
+        <p className="text-gray-500 text-sm mt-8 text-center">
+          {activeFilter === "All" ? "Your watchlist is empty. Add some anime!" : `Nothing marked as "${activeFilter}" yet.`}
+        </p>
+      )}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
         {filteredItems.map((item) => (
           <AnimeCard
