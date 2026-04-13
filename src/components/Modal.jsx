@@ -13,10 +13,11 @@ function Modal({ onClose, type, onAuthSuccess, onSwitchType }) {
 
     if (type === "register") {
       const email = e.target.email.value;
+      const confirmPassword = e.target.confirmPassword.value;
       const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, email }),
+        body: JSON.stringify({ username, password, confirmPassword, email }),
       });
       if (response.ok) {
         const loginResponse = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {

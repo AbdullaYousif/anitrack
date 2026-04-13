@@ -10,19 +10,28 @@ const authRouter = express.Router();
 
 authRouter.post('/register', async (req, res)=> {
     try {
-        const {username, password, email} = req.body;
+        const {username, password, confirmPassword, email} = req.body;
+
+        if (password !== confirmPassword) {
+            return res.status(400).json({ message: 'Passwords do not match.' });
+        }
+        if (password.length < 6) {
+            return res.status(400).json({ message: 'Password must be at least 6 characters.' });
+        }
 
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
-        const createUser = await pool.query('INSERT INTO users (username, password, email) VALUES ($1, $2, $3) RETURNING *' ,[username, hashedPassword, email]);
-        res.status(201).send("User Created Successfully");
+        await pool.query('INSERT INTO users (username, password, email) VALUES ($1, $2, $3) RETURNING *', [username, hashedPassword, email]);
+        res.status(201).json({ message: 'User created successfully.' });
 
     } catch (error) {
+        if (error.code === '23505') {
+            return res.status(400).json({ message: 'Username or email already taken.' });
+        }
         console.error(error);
-        res.status(500).send('An error occured');
+        res.status(500).json({ message: 'An error occurred.' });
     }
-
-    });
+});
 
     authRouter.post('/login', async (req, res) => {
         try {
