@@ -1,5 +1,5 @@
 import "./index.css";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef} from "react";
 import { flushSync } from "react-dom";
 import luffyImg from "../public/one-piece-luffy-thumbs-up.png";
 import {
@@ -14,6 +14,44 @@ import AnimeDetail from "./components/AnimeDetail";
 import Modal from "./components/Modal";
 import Toast from "./components/Toast";
 import Watchlist from "./components/Watchlist";
+
+function sortAnime(items, sortBy) {
+  switch (sortBy) {
+    case "title-asc":
+      return [...items].sort((a, b) => a.title.localeCompare(b.title));
+    case "title-desc":
+      return [...items].sort((a, b) => b.title.localeCompare(a.title));
+    case "score-asc":
+      return [...items].sort((a, b) => {
+        if (a.score === null) return 1;
+        if (b.score === null) return -1;
+        return a.score - b.score;
+      });
+    case "score-desc":
+      return [...items].sort((a, b) => {
+        if (a.score === null) return 1;
+        if (b.score === null) return -1;
+        return b.score - a.score;
+      });
+    default:
+      return items;
+  }
+}
+
+function SortSelect({ sortBy, setSortBy }) {
+  return (
+    <select
+      value={sortBy}
+      onChange={(e) => setSortBy(e.target.value)}
+      className="cursor-pointer bg-gray-800 text-xs rounded-full px-3 py-1 outline-none border-none font-semibold text-gray-400 hover:text-white ml-auto"
+    >
+      <option value="score-desc">Score ↓</option>
+      <option value="score-asc">Score ↑</option>
+      <option value="title-asc">Title A–Z</option>
+      <option value="title-desc">Title Z–A</option>
+    </select>
+  );
+}
 
 function App() {
   const [searchResult, setSearchResult] = useState([]);
@@ -32,6 +70,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState(getCurrentSeason());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [sortBy, setSortBy] = useState("score-desc");
   const [toastMessage, setToastMessage] = useState(null);
   const [userID, setUserID] = useState(() => {
     const saved = localStorage.getItem("userID");
@@ -384,27 +423,34 @@ function App() {
               />
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
-              {searchResult.map((anime) => {
-                return (
-                  <AnimeCard
-                    key={anime.id}
-                    anime={anime}
-                    isLoggedIn={!!userToken}
-                    inWatchlist={!!watchlist[anime.id]}
-                    onToggle={() => toggleWatchlist(anime)}
-                    onChangeStatus={(newStatus) =>
-                      changeStatus(anime.id, newStatus)
-                    }
-                    episodesWatched={watchlist[anime.id]?.episodes_watched ?? 0}
-                    onUpdateProgress={(newCount) =>
-                      updateProgress(anime.id, newCount)
-                    }
-                    onClick={() => setSelectedAnime(anime.id)}
-                  ></AnimeCard>
-                );
-              })}
-            </div>
+            <>
+              <div className="flex mb-2">
+                <SortSelect sortBy={sortBy} setSortBy={setSortBy} />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
+                {sortAnime(searchResult, sortBy).map((anime) => {
+                  return (
+                    <AnimeCard
+                      key={anime.id}
+                      anime={anime}
+                      isLoggedIn={!!userToken}
+                      inWatchlist={!!watchlist[anime.id]}
+                      onToggle={() => toggleWatchlist(anime)}
+                      onChangeStatus={(newStatus) =>
+                        changeStatus(anime.id, newStatus)
+                      }
+                      episodesWatched={
+                        watchlist[anime.id]?.episodes_watched ?? 0
+                      }
+                      onUpdateProgress={(newCount) =>
+                        updateProgress(anime.id, newCount)
+                      }
+                      onClick={() => setSelectedAnime(anime.id)}
+                    ></AnimeCard>
+                  );
+                })}
+              </div>
+            </>
           )}
         </>
       )}
@@ -422,7 +468,8 @@ function App() {
         <>
           <div className="flex flex-col gap-2 mb-6">
             <h1 className="text-2xl font-bold text-green-500">
-              {selectedSeason.charAt(0) + selectedSeason.slice(1).toLowerCase()} {selectedYear}
+              {selectedSeason.charAt(0) + selectedSeason.slice(1).toLowerCase()}{" "}
+              {selectedYear}
             </h1>
             <div className="flex items-center gap-2">
               {seasonalFilter.map((season) => (
@@ -453,15 +500,22 @@ function App() {
               >
                 {Array.from(
                   { length: new Date().getFullYear() - 2000 + 1 },
-                  (_, i) => 2000 + i
-                ).reverse().map((year) => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
+                  (_, i) => 2000 + i,
+                )
+                  .reverse()
+                  .map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
               </select>
             </div>
           </div>
+          <div className="flex mb-2">
+            <SortSelect sortBy={sortBy} setSortBy={setSortBy} />
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
-            {seasonal.map((anime) => {
+            {sortAnime(seasonal, sortBy).map((anime) => {
               return (
                 <AnimeCard
                   key={anime.id}
@@ -505,8 +559,11 @@ function App() {
       )}
       {activeTab === "top" && (
         <>
+          <div className="flex mb-2">
+            <SortSelect sortBy={sortBy} setSortBy={setSortBy} />
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
-            {topAnime.map((anime) => {
+            {sortAnime(topAnime, sortBy).map((anime) => {
               return (
                 <AnimeCard
                   key={anime.id}
