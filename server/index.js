@@ -34,5 +34,4 @@ app.get('/', async (req, res)=> {
 
 app.listen(port, () => {
     console.log(`Express Server listening on port ${port}`);
-    console.log(`FRONTEND_URL: ${process.env.FRONTEND_URL}`);
 })
