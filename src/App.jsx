@@ -298,36 +298,38 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-8">
+    <div className="min-h-screen bg-gray-950 text-white p-4 sm:p-8">
       <h1 className="text-3xl font-bold text-green-500 mb-2">AniTrack</h1>
-      <div id="nav-bar" className="flex gap-6 mb-8">
-        {userToken && (
+      <div id="nav-bar" className="flex flex-col gap-2 mb-8">
+        <div className="flex gap-1 sm:gap-6 overflow-x-auto scrollbar-none">
+          {userToken && (
+            <button
+              className={`px-3 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${activeTab === "watchlist" ? "border-green-500 text-white" : "border-transparent text-gray-400 hover:text-white"}`}
+              onClick={() => setActiveTab("watchlist")}
+            >
+              My Watchlist
+            </button>
+          )}
           <button
-            className={`px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${activeTab === "watchlist" ? "border-green-500 text-white" : "border-transparent text-gray-400 hover:text-white"}`}
-            onClick={() => setActiveTab("watchlist")}
+            className={`cursor-pointer px-3 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${activeTab === "search" ? "border-green-500 text-white" : "border-transparent text-gray-400 hover:text-white"}`}
+            onClick={() => { setActiveTab("search"); setCurrentPage(1); }}
           >
-            My Watchlist
+            Search
           </button>
-        )}
-        <button
-          className={`cursor-pointer px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${activeTab === "search" ? "border-green-500 text-white" : "border-transparent text-gray-400 hover:text-white"}`}
-          onClick={() => { setActiveTab("search"); setCurrentPage(1); }}
-        >
-          Search
-        </button>
-        <button
-          className={`cursor-pointer px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${activeTab === "seasonal" ? "border-green-500 text-white" : "border-transparent text-gray-400 hover:text-white"}`}
-          onClick={() => { setActiveTab("seasonal"); setCurrentPage(1); }}
-        >
-          Seasonal Anime
-        </button>
-        <button
-          className={`cursor-pointer px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${activeTab === "top" ? "border-green-500 text-white" : "border-transparent text-gray-400 hover:text-white"}`}
-          onClick={() => { setActiveTab("top"); setCurrentPage(1); }}
-        >
-          Top Anime
-        </button>
-        <div className="ml-auto flex gap-4 items-center">
+          <button
+            className={`cursor-pointer px-3 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${activeTab === "seasonal" ? "border-green-500 text-white" : "border-transparent text-gray-400 hover:text-white"}`}
+            onClick={() => { setActiveTab("seasonal"); setCurrentPage(1); }}
+          >
+            Seasonal
+          </button>
+          <button
+            className={`cursor-pointer px-3 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${activeTab === "top" ? "border-green-500 text-white" : "border-transparent text-gray-400 hover:text-white"}`}
+            onClick={() => { setActiveTab("top"); setCurrentPage(1); }}
+          >
+            Top Anime
+          </button>
+        </div>
+        <div className="flex gap-4 items-center">
           {!userToken && (
             <button
               className="cursor-pointer px-4 py-2 text-sm font-semibold text-gray-400 hover:text-white"
@@ -363,7 +365,7 @@ function App() {
 
       {activeTab === "search" && (
         <>
-          <div className="relative w-96">
+          <div className="relative w-full max-w-96">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
             </svg>
@@ -389,7 +391,7 @@ function App() {
               >
                 Click Here
               </button>
-              <img src={luffyImg} width={500} style={{ transform: "translate(110px" }} alt="Luffy Image" />
+              <img src={luffyImg} className="w-64 sm:w-96 mx-auto" alt="Luffy Image" />
             </div>
           ) : (
             <>
