@@ -302,14 +302,12 @@ function App() {
       <h1 className="text-3xl font-bold text-green-500 mb-2">AniTrack</h1>
       <div id="nav-bar" className="flex flex-col gap-2 mb-8">
         <div className="flex gap-1 sm:gap-6 overflow-x-auto scrollbar-none">
-          {userToken && (
-            <button
+          <button
               className={`px-3 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${activeTab === "watchlist" ? "border-green-500 text-white" : "border-transparent text-gray-400 hover:text-white"}`}
               onClick={() => setActiveTab("watchlist")}
             >
               My Watchlist
             </button>
-          )}
           <button
             className={`cursor-pointer px-3 py-2 text-sm font-semibold rounded-t-lg border-b-2 ${activeTab === "search" ? "border-green-500 text-white" : "border-transparent text-gray-400 hover:text-white"}`}
             onClick={() => { setActiveTab("search"); setCurrentPage(1); }}
@@ -425,6 +423,7 @@ function App() {
           onUpdateProgress={updateProgress}
           onSelectAnime={setSelectedAnime}
           isLoggedIn={!!userToken}
+          onLoginClick={() => { setModalStatus(true); setModalType("login"); }}
         />
       )}
 
