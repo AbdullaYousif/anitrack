@@ -178,6 +178,12 @@ function App() {
           method: "GET",
           headers: { Authorization: `Bearer ${userToken}` },
         });
+        if (!res.ok) {
+          setUserToken(null); setUsername(null); setUserID(null);
+          localStorage.removeItem("userToken"); localStorage.removeItem("username");
+          localStorage.removeItem("userID"); localStorage.removeItem("watchlist");
+          return;
+        }
         const data = await res.json();
         const result = {};
         data.forEach((row) => {

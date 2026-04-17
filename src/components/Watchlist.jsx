@@ -51,9 +51,9 @@ function Watchlist({
 
   return (
     <>
-      <div className="flex items-center gap-6 mb-6">
+      <div className="flex flex-wrap items-center gap-3 mb-6">
         <h1 className="text-2xl font-bold text-green-500">My Watchlist</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto scrollbar-none">
           {STATUS_OPTIONS.map((status) => (
             <button
               key={status}
