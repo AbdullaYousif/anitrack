@@ -30,22 +30,25 @@ function AnimeCard({ anime, isLoggedIn, inWatchlist, onToggle, episodesWatched, 
         </span>
       )}
 
-      <div className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-2 gap-1.5">
-        <p className="text-xs font-semibold leading-tight line-clamp-2">{anime.title}</p>
-
+      {/* Always-visible bottom strip */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 bg-linear-to-t from-black to-transparent p-2 flex items-end justify-between gap-1">
+        <p className="text-xs font-semibold leading-tight line-clamp-2 flex-1">{anime.title}</p>
         {isLoggedIn && (
           <button
             onClick={(e) => { e.stopPropagation(); onToggle(); }}
-            className={`cursor-pointer w-full py-1 rounded text-xs font-semibold ${inWatchlist ? "bg-white/10 hover:bg-red-500" : "bg-green-500 hover:bg-green-400"}`}
+            className={`shrink-0 px-2 py-1 rounded text-xs font-bold transition-colors ${inWatchlist ? "bg-red-500 text-white" : "bg-white/20 text-white hover:bg-green-500 hover:text-black"}`}
           >
-            {inWatchlist ? "Remove" : "+ Watchlist"}
+            {inWatchlist ? "✕" : "+ Add"}
           </button>
         )}
+      </div>
 
+      <div className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-2 gap-1.5 pb-10 pointer-events-none">
         {inWatchlist && (
           <>
             <select
               onClick={(e) => e.stopPropagation()}
+              style={{ pointerEvents: 'auto' }}
               className="cursor-pointer bg-white/10 text-white text-xs rounded w-full p-1 outline-none border border-white/20"
               value={status}
               onChange={(e) => onChangeStatus(e.target.value)}
@@ -55,7 +58,7 @@ function AnimeCard({ anime, isLoggedIn, inWatchlist, onToggle, episodesWatched, 
               <option value="Completed">Completed</option>
             </select>
 
-            <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-1">
+            <div onClick={(e) => e.stopPropagation()} style={{ pointerEvents: 'auto' }} className="flex items-center gap-1">
               <button
                 onClick={(e) => { e.stopPropagation(); if (episodesWatched > 0) { onUpdateProgress(episodesWatched - 1); setInputValue(episodesWatched - 1); }}}
                 className="cursor-pointer bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded w-6 h-6 flex items-center justify-center shrink-0"

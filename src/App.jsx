@@ -298,7 +298,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-4 sm:p-8">
+    <div className="min-h-screen bg-gray-950 text-white p-4 sm:p-8 overflow-x-hidden">
       <h1 className="text-3xl font-bold text-green-500 mb-2">AniTrack</h1>
       <div id="nav-bar" className="flex flex-col gap-2 mb-8">
         <div className="flex gap-1 sm:gap-6 overflow-x-auto scrollbar-none">
