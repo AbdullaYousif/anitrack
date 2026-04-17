@@ -6,10 +6,6 @@ html, body {
   background-color: #030712;
 }
 
-*, *::before, *::after {
-  box-sizing: border-box;
-  max-width: 100%;
-}
 
 .scrollbar-none {
   scrollbar-width: none;
