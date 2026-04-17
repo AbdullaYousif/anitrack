@@ -30,7 +30,7 @@ let query = `query ($search: String, $page: Int, $perPage: Int) {
     lastPage
     hasNextPage
     }
-      media(search: $search, type: ANIME) {
+      media(search: $search, type: ANIME, isAdult: false, genre_not_in: ["Hentai", "Ecchi"]) {
         id
         title { romaji english }
         coverImage {large }
@@ -55,7 +55,7 @@ export function getCurrentSeason() {
 export async function getSeasonalAnime(page, season, year) {
     let query = `query ($season: MediaSeason, $seasonYear: Int, $page: Int $perPage: Int){
     Page(page: $page, perPage: $perPage) {
-    media(season: $season, seasonYear: $seasonYear, type: ANIME){
+    media(season: $season, seasonYear: $seasonYear, type: ANIME, isAdult: false, genre_not_in: ["Hentai", "Ecchi"]){
     id
     title {romaji english}
     coverImage {large}
@@ -76,7 +76,7 @@ export async function getSeasonalAnime(page, season, year) {
 export async function getTopAnime(page) {
     let query = `query ($perPage: Int, $page: Int) {
     Page(page: $page, perPage: $perPage) {
-      media(sort: SCORE_DESC, type: ANIME) {
+      media(sort: SCORE_DESC, type: ANIME, isAdult: false, genre_not_in: ["Hentai", "Ecchi"]) {
         id
         title { romaji english }
         coverImage { large }
