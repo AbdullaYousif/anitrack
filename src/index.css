@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
-body {
+html, body {
   overflow-x: hidden;
+  width: 100%;
 }
 
 *, *::before, *::after {
